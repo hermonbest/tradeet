@@ -1,7 +1,11 @@
 export function calculateWinRate(trades: any[]) {
     if (!trades || trades.length === 0) return 0
     const winningTrades = trades.filter((t) => t.profit_usd > 0).length
-    return (winningTrades / trades.length) * 100
+    const losingTrades = trades.filter((t) => t.profit_usd < 0).length
+    const totalDecisiveTrades = winningTrades + losingTrades
+
+    if (totalDecisiveTrades === 0) return 0
+    return (winningTrades / totalDecisiveTrades) * 100
 }
 
 export function calculateProfitFactor(trades: any[]) {
@@ -24,9 +28,12 @@ export function calculateExpectancy(trades: any[]) {
 
     const winningTrades = trades.filter((t) => t.profit_usd > 0)
     const losingTrades = trades.filter((t) => t.profit_usd < 0)
+    const totalDecisiveTrades = winningTrades.length + losingTrades.length
 
-    const winRate = winningTrades.length / trades.length
-    const lossRate = losingTrades.length / trades.length
+    if (totalDecisiveTrades === 0) return 0
+
+    const winRate = winningTrades.length / totalDecisiveTrades
+    const lossRate = losingTrades.length / totalDecisiveTrades
 
     const avgWin = winningTrades.length > 0
         ? winningTrades.reduce((sum, t) => sum + t.profit_usd, 0) / winningTrades.length
@@ -80,4 +87,31 @@ export function calculateAverageLoss(trades: any[]) {
     const losers = trades.filter((t) => (t.profit_usd || 0) < 0)
     if (losers.length === 0) return 0
     return losers.reduce((sum, t) => sum + t.profit_usd, 0) / losers.length
+}
+
+export function calculatePerformanceScore(stats: {
+    winRate: number;
+    profitFactor: number;
+    consistency: number;
+    rrRatio: number;
+    tradeCount: number;
+}) {
+    // A simple weighted scoring system (out of 100)
+    // Win Rate: 30% weight
+    // Profit Factor: 30% weight (capped at 5)
+    // Consistency: 20% weight
+    // Risk Reward: 20% weight (capped at 4)
+
+    const winRateScore = Math.min(stats.winRate, 100) * 0.3;
+    const pfScore = Math.min(stats.profitFactor / 5 * 100, 100) * 0.3;
+    const consistencyScore = Math.min(stats.consistency, 100) * 0.2;
+    const rrScore = Math.min(stats.rrRatio / 4 * 100, 100) * 0.2;
+
+    let totalScore = winRateScore + pfScore + consistencyScore + rrScore;
+
+    // Penalty for very low trade count
+    if (stats.tradeCount < 5) totalScore *= 0.5;
+    else if (stats.tradeCount < 10) totalScore *= 0.8;
+
+    return Math.round(totalScore);
 }

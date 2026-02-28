@@ -82,6 +82,43 @@ export default async function SettingsPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Danger Zone */}
+                <Card className="border-destructive/30 bg-destructive/5 tradeet-card">
+                    <CardHeader>
+                        <CardTitle className="text-sm font-semibold text-destructive flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4" />
+                            Danger Zone
+                        </CardTitle>
+                        <CardDescription className="text-xs mt-0.5">
+                            Irreversible actions for your account.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center justify-between p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                            <div>
+                                <h4 className="text-sm font-bold text-foreground">Delete Account</h4>
+                                <p className="text-xs text-muted-foreground mt-1 max-w-[250px]">
+                                    Permanently delete your account and remove all your trading data. <span className="text-destructive font-medium">This cannot be undone.</span>
+                                </p>
+                            </div>
+                            <form action={async () => {
+                                "use server"
+                                const { deleteAccount } = await import('@/app/(dashboard)/actions')
+                                await deleteAccount()
+                            }}>
+                                <Button
+                                    type="submit"
+                                    variant="destructive"
+                                    size="sm"
+                                    className="font-bold shadow-lg shadow-destructive/25"
+                                >
+                                    Delete My Account
+                                </Button>
+                            </form>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     )

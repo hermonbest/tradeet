@@ -9,7 +9,7 @@ export default async function CalendarPage() {
     // Fetch trades
     const { data: trades } = await supabase
         .from('trades')
-        .select('id, trade_date, profit_usd, pair')
+        .select('*')
         .eq('user_id', userData?.user?.id)
 
     return (

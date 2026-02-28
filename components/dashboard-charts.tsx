@@ -11,14 +11,22 @@ interface ChartProps {
 export function WinRateDonut({ data }: ChartProps) {
     const winners = data.filter(t => (t.profit_usd || 0) > 0).length
     const losers = data.filter(t => (t.profit_usd || 0) < 0).length
+    const breakevens = data.filter(t => (t.profit_usd || 0) === 0).length
 
     const chartData = [
         { name: 'Winners', value: winners },
-        { name: 'Losers', value: losers }
-    ]
+        { name: 'Losers', value: losers },
+        { name: 'Breakeven', value: breakevens }
+    ].filter(d => d.value > 0)
 
-    const COLORS = ['#22c55e', '#ef4444']
-    const winRate = data.length > 0 ? (winners / (winners + losers)) * 100 : 0
+    const COLORS: Record<string, string> = {
+        'Winners': '#22c55e',
+        'Losers': '#ef4444',
+        'Breakeven': '#9ca3af'
+    }
+
+    const decisiveTrades = winners + losers
+    const winRate = decisiveTrades > 0 ? (winners / decisiveTrades) * 100 : 0
 
     return (
         <div className="h-[200px] w-full relative">
@@ -34,7 +42,7 @@ export function WinRateDonut({ data }: ChartProps) {
                         dataKey="value"
                     >
                         {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell key={`cell-${index}`} fill={COLORS[entry.name]} />
                         ))}
                     </Pie>
                     <Tooltip />
@@ -115,14 +123,22 @@ export function WinRateByDaysDonut({ data }: ChartProps) {
     const days = Object.values(dailyPnL)
     const winners = days.filter(pnl => pnl > 0).length
     const losers = days.filter(pnl => pnl < 0).length
+    const breakevens = days.filter(pnl => pnl === 0).length
 
     const chartData = [
         { name: 'Green Days', value: winners },
-        { name: 'Red Days', value: losers }
-    ]
+        { name: 'Red Days', value: losers },
+        { name: 'Breakeven Days', value: breakevens }
+    ].filter(d => d.value > 0)
 
-    const COLORS = ['#22c55e', '#ef4444']
-    const winRate = days.length > 0 ? (winners / (winners + losers)) * 100 : 0
+    const COLORS: Record<string, string> = {
+        'Green Days': '#22c55e',
+        'Red Days': '#ef4444',
+        'Breakeven Days': '#9ca3af'
+    }
+
+    const decisiveDays = winners + losers
+    const winRate = decisiveDays > 0 ? (winners / decisiveDays) * 100 : 0
 
     return (
         <div className="h-[200px] w-full relative">
@@ -138,7 +154,7 @@ export function WinRateByDaysDonut({ data }: ChartProps) {
                         dataKey="value"
                     >
                         {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            <Cell key={`cell-${index}`} fill={COLORS[entry.name]} />
                         ))}
                     </Pie>
                     <Tooltip />
@@ -176,7 +192,7 @@ export function DailyPnLChart({ data }: ChartProps) {
                     <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
                     <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                         {chartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.amount >= 0 ? '#22c55e' : '#ef4444'} />
+                            <Cell key={`cell-${index}`} fill={entry.amount > 0 ? '#22c55e' : entry.amount < 0 ? '#ef4444' : '#9ca3af'} />
                         ))}
                     </Bar>
                 </BarChart>
@@ -217,7 +233,7 @@ export function PerformanceRadarChart({ stats }: { stats: any }) {
     return (
         <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                <RadarChart cx="50%" cy="50%" outerRadius="65%" data={chartData}>
                     <PolarGrid stroke="#3f3f46" strokeOpacity={0.6} />
                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 10, fill: '#a1a1aa' }} />
                     <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />

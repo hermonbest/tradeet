@@ -1,6 +1,6 @@
 'use client'
 
-import { Calendar, Home, Settings, LogOut, TrendingUp, Zap, ShieldCheck } from 'lucide-react'
+import { Calendar, Home, Settings, LogOut, TrendingUp, Zap, ShieldCheck, List } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
     Sidebar,
@@ -47,6 +47,7 @@ export function AppSidebar() {
 
     const navItems = [
         { title: 'Dashboard', url: '/', icon: Home },
+        { title: 'Trades', url: '/trades', icon: List },
         { title: 'Calendar', url: '/calendar', icon: Calendar },
         { title: 'Settings', url: '/settings', icon: Settings },
     ]
@@ -58,10 +59,10 @@ export function AppSidebar() {
     return (
         <Sidebar>
             {/* Brand Header */}
-            <SidebarHeader className="px-4 py-5 border-b border-sidebar-border">
+            <SidebarHeader className="px-2 py-5 border-b border-sidebar-border">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+                        <div className="w-5 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
                             <TrendingUp className="w-4 h-4 text-primary" />
                         </div>
                         <div>

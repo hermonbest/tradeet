@@ -12,6 +12,7 @@ import {
     calculateNetPnL,
     calculateAverageWin,
     calculateAverageLoss,
+    calculatePerformanceScore,
 } from '@/lib/calculations'
 import { Badge } from '@/components/ui/badge'
 import { TrendingUp, TrendingDown, Plus, LayoutDashboard, Lock, Zap } from 'lucide-react'
@@ -51,6 +52,7 @@ export default async function DashboardPage() {
     // Winners vs Losers count
     const winnersCount = tradesList.filter(t => t.profit_usd > 0).length
     const losersCount = tradesList.filter(t => t.profit_usd < 0).length
+    const breakevensCount = tradesList.filter(t => t.profit_usd === 0).length
 
     // Daily winners vs losers
     const dailyPnLMap: Record<string, number> = {}
@@ -60,6 +62,7 @@ export default async function DashboardPage() {
     })
     const dailyWinners = Object.values(dailyPnLMap).filter(v => v > 0).length
     const dailyLosers = Object.values(dailyPnLMap).filter(v => v < 0).length
+    const dailyBreakevens = Object.values(dailyPnLMap).filter(v => v === 0).length
 
     // Dummy consistency/RR for radar
     const radarStats = {
@@ -69,6 +72,8 @@ export default async function DashboardPage() {
         rrRatio: avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : 1,
         tradeCount: tradesList.length
     }
+
+    const performanceScore = calculatePerformanceScore(radarStats)
 
     const netPnLType = netPnLUsd >= 0 ? 'profit' : 'loss'
 
@@ -86,9 +91,9 @@ export default async function DashboardPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <ExchangeRateInput initialRate={exchangeRate} />
-                    <AddTradeDialog />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+                    <div className="w-full sm:w-auto"><ExchangeRateInput initialRate={exchangeRate} /></div>
+                    <div className="w-full sm:w-auto"><AddTradeDialog /></div>
                 </div>
             </div>
 
@@ -133,7 +138,7 @@ export default async function DashboardPage() {
                     <Card className="tradeet-card">
                         <CardHeader className="pb-2 px-4 pt-4">
                             <CardTitle className="text-xs font-semibold flex items-center justify-between text-foreground">
-                                Zella Score
+                                Trade Score
                                 <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PRO</Badge>
                             </CardTitle>
                         </CardHeader>
@@ -156,7 +161,7 @@ export default async function DashboardPage() {
                             <div className="mt-4 text-center">
                                 <span className="stat-label">Performance Score</span>
                                 <div className="num text-2xl font-bold text-primary mt-1">
-                                    {isPro ? '84 / 100' : '?? / 100'}
+                                    {isPro ? `${performanceScore} / 100` : '?? / 100'}
                                 </div>
                             </div>
                         </CardContent>
@@ -199,14 +204,18 @@ export default async function DashboardPage() {
                             </CardHeader>
                             <CardContent className="pt-6 px-4 pb-4">
                                 <WinRateDonut data={tradesList} />
-                                <div className="mt-4 flex justify-center gap-6">
-                                    <div className="flex items-center gap-2">
+                                <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs">
+                                    <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
-                                        <span className="text-xs text-muted-foreground">{winnersCount} winners</span>
+                                        <span className="text-muted-foreground">{winnersCount} winners</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
-                                        <span className="text-xs text-muted-foreground">{losersCount} losers</span>
+                                        <span className="text-muted-foreground">{losersCount} losers</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]" />
+                                        <span className="text-muted-foreground">{breakevensCount} breakevens</span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -218,14 +227,18 @@ export default async function DashboardPage() {
                             </CardHeader>
                             <CardContent className="pt-6 px-4 pb-4">
                                 <WinRateByDaysDonut data={tradesList} />
-                                <div className="mt-4 flex justify-center gap-6">
-                                    <div className="flex items-center gap-2">
+                                <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs">
+                                    <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
-                                        <span className="text-xs text-muted-foreground">{dailyWinners} winners</span>
+                                        <span className="text-muted-foreground">{dailyWinners} winners</span>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5">
                                         <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
-                                        <span className="text-xs text-muted-foreground">{dailyLosers} losers</span>
+                                        <span className="text-muted-foreground">{dailyLosers} losers</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]" />
+                                        <span className="text-muted-foreground">{dailyBreakevens} breakevens</span>
                                     </div>
                                 </div>
                             </CardContent>
@@ -260,35 +273,6 @@ export default async function DashboardPage() {
                 </div>
             </div>
 
-            {/* ── Trade Log ── */}
-            <div className="tradeet-card overflow-hidden">
-                <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                    <div>
-                        <h2 className="text-base font-semibold text-foreground">Trade Log</h2>
-                        <p className="stat-label mt-0.5">Full trade history</p>
-                    </div>
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                        View All
-                    </Button>
-                </div>
-                <div className="px-6 pb-6 pt-2">
-                    {!isPro && tradesList.length >= 50 && (
-                        <div className="mb-4 p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <Zap className="w-5 h-5 text-primary" />
-                                <div>
-                                    <p className="text-sm font-bold text-foreground">Trade Limit Reached (50/50)</p>
-                                    <p className="text-xs text-muted-foreground">Upgrade to Pro to log unlimited trades and keep your history growing.</p>
-                                </div>
-                            </div>
-                            <Button asChild size="sm" className="rounded-lg shadow-lg shadow-primary/20">
-                                <a href="/upgrade">Boost to Pro</a>
-                            </Button>
-                        </div>
-                    )}
-                    <TradeList trades={tradesList} />
-                </div>
-            </div>
         </div>
     )
 }

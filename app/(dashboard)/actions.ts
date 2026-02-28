@@ -2,6 +2,7 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 
 // ... existing actions (addTrade, deleteTrade, updateExchangeRate)
 
@@ -48,6 +49,42 @@ export async function addTrade(data: any) {
 
     if (error) {
         console.error('Error adding trade:', error)
+        return { error: error.message }
+    }
+
+    revalidatePath('/')
+    revalidatePath('/calendar')
+    return { success: true }
+}
+
+export async function updateTrade(id: string, data: any) {
+    const supabase = await createClient()
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('trades')
+        .update({
+            pair: data.pair,
+            entry_price: parseFloat(data.entry_price),
+            exit_price: data.exit_price ? parseFloat(data.exit_price) : null,
+            stop_loss: data.stop_loss ? parseFloat(data.stop_loss) : null,
+            take_profit: data.take_profit ? parseFloat(data.take_profit) : null,
+            lot_size: data.lot_size ? parseFloat(data.lot_size) : null,
+            notes: data.notes || '',
+            profit_usd: data.profit_usd ? parseFloat(data.profit_usd) : 0,
+            trade_date: data.trade_date,
+            screenshot_url: data.screenshot_url || null,
+            tags: data.tags || [],
+        })
+        .eq('id', id)
+        .eq('user_id', userData.user.id) // Ensure users can only edit their own trades
+
+    if (error) {
+        console.error('Error updating trade:', error)
         return { error: error.message }
     }
 
@@ -200,4 +237,23 @@ export async function revokePro(userId: string) {
 
     revalidatePath('/admin')
     return { success: true }
+}
+
+export async function deleteAccount() {
+    const supabase = await createClient()
+    const { data: userData } = await supabase.auth.getUser()
+
+    if (!userData?.user) return { error: 'Not authenticated' }
+
+    // Call the secure Postgres function to delete the auth.users record
+    const { error } = await supabase.rpc('delete_own_account')
+
+    if (error) {
+        console.error('Error deleting account:', error)
+        return { error: 'Failed to delete account. Please contact support.' }
+    }
+
+    // Sign out to clear local session cookies
+    await supabase.auth.signOut()
+    redirect('/login')
 }
