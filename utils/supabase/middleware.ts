@@ -34,14 +34,22 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/auth')
-    ) {
+    // Protect routes, but safely bypass auth pages to avoid redirect loops
+    const requestPath = request.nextUrl.pathname
+
+    const isAuthRoute = requestPath === '/login' || requestPath.startsWith('/auth')
+
+    if (!user && !isAuthRoute) {
         // no user, potentially respond by redirecting the user to the login page
         const url = request.nextUrl.clone()
         url.pathname = '/login'
+        return NextResponse.redirect(url)
+    }
+
+    // If user is logged in and trying to access /login, redirect to dashboard
+    if (user && requestPath === '/login') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/'
         return NextResponse.redirect(url)
     }
 
