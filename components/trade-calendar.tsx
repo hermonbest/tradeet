@@ -84,17 +84,17 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
                 </div>
             </div>
 
-            {/* Calendar Grid */}
+            {/* High-Density Calendar Grid */}
             <div className="overflow-x-auto">
-                <div className="min-w-[800px]">
+                <div className="min-w-[340px] md:min-w-[800px]">
                     {/* Weekday Headers */}
-                    <div className="grid grid-cols-[repeat(7,1fr)_120px] mb-2 border-b pb-2">
+                    <div className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_120px] mb-2 border-b pb-2">
                         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                            <div key={day} className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <div key={day} className="text-center text-[10px] md:text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 {day}
                             </div>
                         ))}
-                        <div className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        <div className="hidden md:block text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                             Weekly
                         </div>
                     </div>
@@ -114,44 +114,49 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
                             })
 
                             return (
-                                <div key={weekIdx} className="grid grid-cols-[repeat(7,1fr)_120px] gap-1 min-h-[100px]">
+                                <div key={weekIdx} className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_120px] gap-1 min-h-[60px] md:min-h-[100px]">
                                     {week.map((day, dayIdx) => {
                                         const dateStr = format(day, 'yyyy-MM-dd')
                                         const stats = dailyPnL[dateStr]
                                         const isOutside = !isSameMonth(day, currentMonth)
 
-                                        let cellClass = "relative border rounded-lg p-2 transition-all "
+                                        let cellClass = "relative border rounded-lg p-1 md:p-2 transition-all flex flex-col justify-between "
                                         if (isOutside) {
-                                            cellClass += "bg-muted/10 opacity-30 text-muted-foreground/50"
+                                            cellClass += "bg-muted/5 opacity-20 text-muted-foreground/30"
                                         } else if (stats) {
                                             cellClass += stats.amount >= 0
-                                                ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
-                                                : "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800"
+                                                ? "bg-green-500/10 border-green-500/20"
+                                                : "bg-red-500/10 border-red-500/20"
                                         } else {
-                                            cellClass += "bg-card hover:bg-muted/50"
+                                            cellClass += "bg-card/50 hover:bg-muted/20"
                                         }
 
                                         return (
-                                            <div key={dayIdx} className={cellClass}>
+                                            <div
+                                                key={dayIdx}
+                                                className={cellClass}
+                                                onClick={() => {
+                                                    // On mobile, if there are multiple trades, maybe we just show day details
+                                                    // but for now, we'll let existing modal handle it if selectedTrade set
+                                                }}
+                                            >
                                                 <div className="flex justify-between items-start">
-                                                    <span className={`text-xs font-medium ${isOutside ? '' : 'text-muted-foreground'}`}>
+                                                    <span className={`text-[9px] md:text-xs font-medium ${isOutside ? '' : 'text-muted-foreground'}`}>
                                                         {format(day, 'd')}
                                                     </span>
-                                                    {stats && !isOutside && (
-                                                        <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-muted-foreground/20">
-                                                            {stats.count}
-                                                        </Badge>
-                                                    )}
                                                 </div>
 
-                                                {!isOutside && stats && (
-                                                    <div className="mt-2 space-y-1">
-                                                        <div className={`text-center text-sm font-bold ${stats.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                            {stats.amount >= 0 ? '+' : ''}${Math.abs(stats.amount) >= 1000
-                                                                ? `${(stats.amount / 1000).toFixed(1)}K`
-                                                                : stats.amount.toLocaleString()}
+                                                {!isOutside && stats ? (
+                                                    <div className="flex flex-col items-center justify-center flex-1">
+                                                        <div className={`text-[10px] md:text-sm font-bold ${stats.amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                                            {stats.amount >= 0 ? '+' : '-'}${Math.abs(stats.amount) >= 1000
+                                                                ? `${(Math.abs(stats.amount) / 1000).toFixed(0)}K`
+                                                                : Math.abs(stats.amount) >= 100
+                                                                    ? Math.abs(stats.amount).toFixed(0)
+                                                                    : Math.abs(stats.amount).toFixed(0)}
                                                         </div>
-                                                        <div className="flex flex-col gap-1">
+                                                        {/* On mobile, just a tiny indicator for multiple trades */}
+                                                        <div className="hidden md:flex flex-col gap-1 w-full mt-1">
                                                             {trades
                                                                 .filter(t => t.trade_date && t.trade_date.split('T')[0] === dateStr)
                                                                 .map(trade => (
@@ -162,8 +167,8 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
                                                                             setSelectedTrade(trade)
                                                                         }}
                                                                         className={`flex items-center justify-between px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${trade.profit_usd >= 0
-                                                                                ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400'
-                                                                                : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
+                                                                            ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400'
+                                                                            : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
                                                                             }`}
                                                                     >
                                                                         <span className="truncate">{trade.pair}</span>
@@ -172,14 +177,19 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
                                                                 ))
                                                             }
                                                         </div>
+                                                        <div className="md:hidden mt-0.5">
+                                                            {stats.count > 1 && <span className="text-[8px] text-muted-foreground">({stats.count})</span>}
+                                                        </div>
                                                     </div>
+                                                ) : !isOutside && (
+                                                    <div className="flex-1" />
                                                 )}
                                             </div>
                                         )
                                     })}
 
-                                    {/* Weekly Stats Cell */}
-                                    <div className="bg-muted/20 border border-dashed rounded-lg p-2 flex flex-col justify-center items-center text-center">
+                                    {/* Weekly Stats Cell - Hidden on small mobile */}
+                                    <div className="hidden md:flex bg-muted/20 border border-dashed rounded-lg p-2 flex-col justify-center items-center text-center">
                                         <div className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Week {weekIdx + 1}</div>
                                         <div className={`text-sm font-bold ${weeklyPnL >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                             {weeklyPnL >= 0 ? '+' : '-'}${Math.abs(weeklyPnL) >= 1000

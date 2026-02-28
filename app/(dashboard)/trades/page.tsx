@@ -22,7 +22,7 @@ export default async function TradesPage() {
     const exchangeRate = profile?.exchange_rate || 115
 
     return (
-        <div className="p-6 lg:p-8 space-y-8 min-h-screen">
+        <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 min-h-screen">
             {/* ── Page Header ── */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -43,7 +43,7 @@ export default async function TradesPage() {
 
             {/* ── Trade Log ── */}
             <div className="tradeet-card overflow-hidden">
-                <div className="px-6 pb-6 pt-6">
+                <div className="px-4 lg:px-6 pb-6 pt-6">
                     <TradeList trades={tradesList} />
                 </div>
             </div>

@@ -15,7 +15,8 @@ import {
     calculatePerformanceScore,
 } from '@/lib/calculations'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, TrendingDown, Plus, LayoutDashboard, Lock, Zap } from 'lucide-react'
+import { TrendingUp, TrendingDown, Plus, LayoutDashboard, Lock, Zap, List } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { DashboardStats } from '@/components/dashboard-stats'
 
 import { WinRateDonut, EquityCurveChart, WinRateByDaysDonut, DailyPnLChart, ProgressHeatmap, PerformanceRadarChart } from '@/components/dashboard-charts'
@@ -78,7 +79,7 @@ export default async function DashboardPage() {
     const netPnLType = netPnLUsd >= 0 ? 'profit' : 'loss'
 
     return (
-        <div className="p-6 lg:p-8 space-y-8 min-h-screen">
+        <div className="p-4 lg:p-8 space-y-6 lg:space-y-8 min-h-screen">
             {/* ── Page Header ── */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
@@ -98,7 +99,7 @@ export default async function DashboardPage() {
             </div>
 
             {/* ── Main Stats Row ── */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                 {/* Hero stat with glow */}
                 <DashboardStats
                     title="Total Net P&L"
@@ -112,21 +113,35 @@ export default async function DashboardPage() {
                 <DashboardStats
                     title="Profit Factor"
                     value={profitFactor === Infinity ? '∞' : profitFactor.toFixed(2)}
-                    subtitle="Gross wins / Gross losses"
+                    subtitle="Wins / Losses"
                     type={profitFactor >= 1 ? 'profit' : 'loss'}
                 />
 
                 <DashboardStats
-                    title="Avg. Winning Trade"
+                    title="Expectancy"
+                    value={`$${expectancy.toFixed(2)}`}
+                    subtitle="Per trade"
+                    type={expectancy >= 0 ? 'profit' : 'loss'}
+                />
+
+                <DashboardStats
+                    title="Max Drawdown"
+                    value={`-$${Math.abs(maxDrawdown).toFixed(2)}`}
+                    subtitle="Peak to trough"
+                    type="loss"
+                />
+
+                <DashboardStats
+                    title="Avg. Win"
                     value={`$${avgWin.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
-                    subtitle={`From ${winnersCount} winners`}
+                    subtitle={`${winnersCount} wins`}
                     type="profit"
                 />
 
                 <DashboardStats
-                    title="Avg. Losing Trade"
+                    title="Avg. Loss"
                     value={`-$${Math.abs(avgLoss).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
-                    subtitle={`From ${losersCount} losers`}
+                    subtitle={`${losersCount} losses`}
                     type="loss"
                 />
             </div>
@@ -135,144 +150,88 @@ export default async function DashboardPage() {
             <div className="grid gap-6 lg:grid-cols-4">
                 {/* Left Column: Metrics & Tracker */}
                 <div className="space-y-4 lg:col-span-1">
+                    {/* Win Rate (Moved up and shrunk) */}
                     <Card className="tradeet-card">
-                        <CardHeader className="pb-2 px-4 pt-4">
-                            <CardTitle className="text-xs font-semibold flex items-center justify-between text-foreground">
+                        <CardHeader className="pb-1 px-3 pt-3">
+                            <CardTitle className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Win Rate</CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-3 pb-3">
+                            <div className="h-[120px]">
+                                <WinRateDonut data={tradesList} />
+                            </div>
+                            <div className="mt-2 text-center text-xl font-bold num text-green-500">
+                                {winRate.toFixed(1)}%
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Trade Score (Refined size) */}
+                    <Card className="tradeet-card">
+                        <CardHeader className="pb-1 px-3 pt-3">
+                            <CardTitle className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center justify-between">
                                 Trade Score
-                                <Badge variant="outline" className="text-[10px] border-primary/40 text-primary">PRO</Badge>
+                                <Badge variant="outline" className="text-[8px] border-primary/40 text-primary h-3">PRO</Badge>
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="px-4 pb-4 relative">
+                        <CardContent className="px-3 pb-2 relative">
                             {!isPro && (
-                                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-[3px] rounded-xl p-4 text-center">
-                                    <Lock className="w-8 h-8 text-primary mb-2 opacity-80" />
-                                    <h3 className="text-sm font-bold text-foreground">Unlock Zella Score</h3>
-                                    <p className="text-[10px] text-muted-foreground mt-1 mb-3 px-4">
-                                        Advanced performance metrics are reserved for Pro members.
-                                    </p>
-                                    <Button asChild size="sm" className="h-7 px-3 text-[10px] rounded-lg">
-                                        <a href="/upgrade">Upgrade Now</a>
+                                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/60 backdrop-blur-[2px] rounded-xl p-2 text-center">
+                                    <Lock size={16} className="text-primary mb-1 opacity-80" />
+                                    <h3 className="text-[10px] font-bold text-foreground">Unlock Score</h3>
+                                    <Button asChild size="sm" className="h-6 px-2 text-[8px] rounded mt-1">
+                                        <a href="/upgrade">Upgrade</a>
                                     </Button>
                                 </div>
                             )}
-                            <div className={!isPro ? 'opacity-20 grayscale' : ''}>
+                            <div className={cn("h-[140px]", !isPro ? 'opacity-20 grayscale' : '')}>
                                 <PerformanceRadarChart stats={radarStats} />
                             </div>
-                            <div className="mt-4 text-center">
-                                <span className="stat-label">Performance Score</span>
-                                <div className="num text-2xl font-bold text-primary mt-1">
-                                    {isPro ? `${performanceScore} / 100` : '?? / 100'}
+                            <div className="mt-2 text-center">
+                                <span className="text-[9px] text-muted-foreground uppercase tracking-widest">Performance</span>
+                                <div className="num text-lg font-bold text-primary mt-0.5">
+                                    {isPro ? `${performanceScore}/100` : '??/100'}
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     <Card className="tradeet-card">
-                        <CardHeader className="pb-2 px-4 pt-4 flex flex-row items-center justify-between">
-                            <CardTitle className="stat-label">Progress Tracker</CardTitle>
-                            <Badge className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border-amber-500/30 text-[9px] h-4">BETA</Badge>
+                        <CardHeader className="pb-1 px-3 pt-3 flex flex-row items-center justify-between">
+                            <CardTitle className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Tracker</CardTitle>
+                            <Badge className="bg-amber-500/20 text-amber-400 border-none text-[8px] h-3">BETA</Badge>
                         </CardHeader>
-                        <CardContent className="px-4 pb-4">
+                        <CardContent className="px-3 pb-3">
                             <ProgressHeatmap data={tradesList} />
-                            <div className="mt-4 flex justify-between text-[10px] text-muted-foreground uppercase tracking-wider">
-                                <span>Today</span>
-                                <span className="font-bold text-foreground num">0/3 Trades</span>
-                            </div>
                         </CardContent>
                     </Card>
-
-                    <div className="grid grid-cols-1 gap-4">
-                        <DashboardStats
-                            title="Expectancy"
-                            value={`$${expectancy.toFixed(2)}`}
-                            type={expectancy >= 0 ? 'profit' : 'loss'}
-                        />
-                        <DashboardStats
-                            title="Max Drawdown"
-                            value={`-$${Math.abs(maxDrawdown).toFixed(2)}`}
-                            type="loss"
-                        />
-                    </div>
                 </div>
 
                 {/* Center/Right Column: Charts */}
-                <div className="lg:col-span-3 space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2">
-                        <Card className="tradeet-card overflow-hidden">
-                            <CardHeader className="border-b border-border px-4 pt-4 pb-3">
-                                <CardTitle className="text-sm font-semibold text-foreground">Winning % By Trades</CardTitle>
+                <div className="lg:col-span-3 space-y-4 lg:space-y-6">
+                    {/* High-Density Chart Grid */}
+                    <div className="grid gap-4 lg:gap-6 grid-cols-1 md:grid-cols-2">
+                        {/* Cumulative P&L / Equity Curve */}
+                        <Card className="tradeet-card md:col-span-2">
+                            <CardHeader className="pb-1 px-3 pt-3">
+                                <CardTitle className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Performance History</CardTitle>
                             </CardHeader>
-                            <CardContent className="pt-6 px-4 pb-4">
-                                <WinRateDonut data={tradesList} />
-                                <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
-                                        <span className="text-muted-foreground">{winnersCount} winners</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
-                                        <span className="text-muted-foreground">{losersCount} losers</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]" />
-                                        <span className="text-muted-foreground">{breakevensCount} breakevens</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="tradeet-card overflow-hidden">
-                            <CardHeader className="border-b border-border px-4 pt-4 pb-3">
-                                <CardTitle className="text-sm font-semibold text-foreground">Winning % By Days</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-6 px-4 pb-4">
-                                <WinRateByDaysDonut data={tradesList} />
-                                <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
-                                        <span className="text-muted-foreground">{dailyWinners} winners</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
-                                        <span className="text-muted-foreground">{dailyLosers} losers</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]" />
-                                        <span className="text-muted-foreground">{dailyBreakevens} breakevens</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="space-y-6">
-                        <Card className="tradeet-card">
-                            <CardHeader className="border-b border-border px-4 pt-4 pb-3">
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="text-sm font-semibold text-foreground">Performance History</CardTitle>
-                                    <div className="flex gap-2">
-                                        <Badge variant="secondary" className="text-[9px] py-0 cursor-pointer bg-primary/20 text-primary border-primary/30">Daily Cumulative</Badge>
-                                        <Badge variant="outline" className="text-[9px] py-0 cursor-pointer text-muted-foreground border-border">Net P&L</Badge>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-4">
+                            <CardContent className="p-3 h-[180px] lg:h-[300px]">
                                 <EquityCurveChart data={tradesList} />
                             </CardContent>
                         </Card>
 
-                        <Card className="tradeet-card">
-                            <CardHeader className="border-b border-border px-4 pt-4 pb-3">
-                                <CardTitle className="stat-label">Net Daily P&L</CardTitle>
+                        {/* Net Daily P&L Bar Chart */}
+                        <Card className="tradeet-card md:col-span-2">
+                            <CardHeader className="pb-1 px-3 pt-3">
+                                <CardTitle className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Net Daily P&L</CardTitle>
                             </CardHeader>
-                            <CardContent className="p-4">
+                            <CardContent className="p-3 h-[180px] lg:h-[300px]">
                                 <DailyPnLChart data={tradesList} />
                             </CardContent>
                         </Card>
                     </div>
                 </div>
             </div>
-
         </div>
     )
 }

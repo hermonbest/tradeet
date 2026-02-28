@@ -35,18 +35,18 @@ export function DashboardStats({
 
     return (
         <Card className="tradeet-card border-zinc-800 hover:border-zinc-700 transition-colors duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-4 pt-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
                 {/* Label: small, uppercase, muted */}
-                <span className="stat-label">{title}</span>
+                <span className="stat-label text-[10px] lg:text-xs">{title}</span>
                 {icon && (
-                    <span className={cn('opacity-60', valueColor)}>{icon}</span>
+                    <span className={cn('opacity-60 scale-75 lg:scale-100', valueColor)}>{icon}</span>
                 )}
             </CardHeader>
-            <CardContent className="px-4 pb-4">
+            <CardContent className="px-3 pb-3">
                 {/* Value: large, bold, monospace */}
                 <div
                     className={cn(
-                        'num text-2xl font-bold leading-none',
+                        'num text-xl lg:text-2xl font-bold leading-none',
                         valueColor,
                         glowClass
                     )}
@@ -54,7 +54,7 @@ export function DashboardStats({
                     {value}
                 </div>
                 {subtitle && (
-                    <p className="text-xs text-muted-foreground mt-1.5 num">{subtitle}</p>
+                    <p className="text-[10px] text-muted-foreground mt-1 num truncate">{subtitle}</p>
                 )}
             </CardContent>
         </Card>
