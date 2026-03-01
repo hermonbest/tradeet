@@ -34,12 +34,16 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    // Protect routes, but safely bypass auth pages to avoid redirect loops
+    // Protect routes, but safely bypass public pages to avoid redirect loops
     const requestPath = request.nextUrl.pathname
 
-    const isAuthRoute = requestPath === '/login' || requestPath.startsWith('/auth')
+    const isPublicRoute =
+        requestPath === '/' ||
+        requestPath === '/landing' ||
+        requestPath === '/login' ||
+        requestPath.startsWith('/auth')
 
-    if (!user && !isAuthRoute) {
+    if (!user && !isPublicRoute) {
         // no user, potentially respond by redirecting the user to the login page
         const url = request.nextUrl.clone()
         url.pathname = '/login'

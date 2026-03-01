@@ -25,6 +25,12 @@ export function DashboardStats({
         neutral: 'text-foreground',
     }[type]
 
+    const borderTopColor = {
+        profit: 'border-t-[#22c55e]/60',
+        loss: 'border-t-[#ef4444]/60',
+        neutral: 'border-t-primary/40',
+    }[type]
+
     const glowClass = glow
         ? type === 'profit'
             ? 'profit-glow'
@@ -34,16 +40,20 @@ export function DashboardStats({
         : ''
 
     return (
-        <Card className="tradeet-card border-zinc-800 hover:border-zinc-700 transition-colors duration-200">
+        <Card
+            className={cn(
+                'tradeet-card border-zinc-800 stat-card-hover border-t-2',
+                borderTopColor
+            )}
+            aria-label={`${title}: ${value}`}
+        >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 pt-3">
-                {/* Label: small, uppercase, muted */}
                 <span className="stat-label text-[10px] lg:text-xs">{title}</span>
                 {icon && (
                     <span className={cn('opacity-60 scale-75 lg:scale-100', valueColor)}>{icon}</span>
                 )}
             </CardHeader>
             <CardContent className="px-3 pb-3">
-                {/* Value: large, bold, monospace */}
                 <div
                     className={cn(
                         'num text-xl lg:text-2xl font-bold leading-none',

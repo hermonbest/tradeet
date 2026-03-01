@@ -18,9 +18,13 @@ export default async function DashboardLayout({
     return (
         <SidebarProvider>
             <AppSidebar />
-            <main className="w-full flex-1">
-                <SidebarTrigger />
-                {children}
+            <main className="w-full flex-1 min-h-screen">
+                <div className="sticky top-0 z-10 flex items-center h-10 px-3 border-b border-border/40 bg-background/80 backdrop-blur-sm">
+                    <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
+                </div>
+                <div className="page-enter">
+                    {children}
+                </div>
             </main>
         </SidebarProvider>
     )

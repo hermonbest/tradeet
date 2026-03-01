@@ -18,27 +18,37 @@ import { Input } from '@/components/ui/input'
 import { addTrade } from '@/app/(dashboard)/actions'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-
+import { AlertCircle, Loader2, CheckCircle2 } from 'lucide-react'
 
 const tradeSchema = z.object({
-    pair: z.string().min(1, 'Pair is required'),
-    entry_price: z.string().min(1, 'Entry price is required'),
-    exit_price: z.string().optional(),
-    stop_loss: z.string().optional(),
-    take_profit: z.string().optional(),
-    lot_size: z.string().optional(),
-    profit_usd: z.string().optional(),
+    pair: z.string().min(1, 'Pair is required').max(20, 'Pair too long'),
+    entry_price: z.string()
+        .min(1, 'Entry price is required')
+        .refine(v => !isNaN(parseFloat(v)) && parseFloat(v) > 0, 'Must be a positive number'),
+    exit_price: z.string().optional().refine(v => !v || !isNaN(parseFloat(v)), 'Must be a valid number'),
+    stop_loss: z.string().optional().refine(v => !v || !isNaN(parseFloat(v)), 'Must be a valid number'),
+    take_profit: z.string().optional().refine(v => !v || !isNaN(parseFloat(v)), 'Must be a valid number'),
+    lot_size: z.string().optional().refine(v => !v || !isNaN(parseFloat(v)), 'Must be a valid number'),
+    profit_usd: z.string().optional().refine(v => !v || !isNaN(parseFloat(v)), 'Must be a valid number'),
     notes: z.string().optional(),
     trade_date: z.string().optional(),
     screenshot_url: z.string().optional(),
     tags: z.array(z.string()),
 })
 
+const PSYCHOLOGY_TAGS = [
+    { label: '✅ Followed Plan', value: 'Followed Plan' },
+    { label: '🤬 Revenge Trade', value: 'Revenge Trade' },
+    { label: '😰 FOMO', value: 'FOMO' },
+    { label: '🎉 Perfect Entry', value: 'Perfect Entry' },
+]
+
 export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [success, setSuccess] = useState(false)
 
     const form = useForm<z.infer<typeof tradeSchema>>({
-
         resolver: zodResolver(tradeSchema),
         defaultValues: {
             pair: '',
@@ -55,19 +65,48 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
         },
     })
 
+    const profitValue = form.watch('profit_usd')
+    const profitNum = parseFloat(profitValue || '0')
+    const profitBorderColor = !profitValue
+        ? ''
+        : profitNum > 0
+            ? 'border-green-500/60 focus:border-green-500'
+            : profitNum < 0
+                ? 'border-red-500/60 focus:border-red-500'
+                : ''
+
     async function onSubmit(values: z.infer<typeof tradeSchema>) {
         setLoading(true)
-        const tradeData = { ...values, screenshot_url: null }
-        const result = await addTrade(tradeData)
-        setLoading(false)
+        setError(null)
 
-        if (result.error === 'TRADE_LIMIT_REACHED') {
-            alert('Trade limit reached! Free accounts are limited to 50 trades. Please upgrade to Pro for unlimited logging.')
-        } else if (result.error) {
-            alert(result.error)
-        } else {
-            form.reset()
-            if (onSuccess) onSuccess()
+        // Sanitize pair
+        const tradeData = {
+            ...values,
+            pair: values.pair.trim().toUpperCase(),
+            screenshot_url: null,
+        }
+
+        try {
+            const result = await addTrade(tradeData)
+            if (result.error === 'TRADE_LIMIT_REACHED') {
+                setError('Trade limit reached! Free accounts are limited to 50 trades. Please upgrade to Pro for unlimited logging.')
+            } else if (result.error) {
+                setError(result.error)
+            } else {
+                setSuccess(true)
+                setTimeout(() => {
+                    setSuccess(false)
+                    form.reset({
+                        ...form.formState.defaultValues,
+                        trade_date: new Date().toISOString().split('T')[0],
+                    })
+                    if (onSuccess) onSuccess()
+                }, 900)
+            }
+        } catch {
+            setError('An unexpected error occurred. Please try again.')
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -82,7 +121,11 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                             <FormItem>
                                 <FormLabel>Pair</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="EUR/USD" {...field} />
+                                    <Input
+                                        placeholder="EUR/USD"
+                                        {...field}
+                                        onChange={e => field.onChange(e.target.value.toUpperCase())}
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -174,6 +217,7 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                     />
                 </div>
 
+                {/* Profit field with live colour preview */}
                 <FormField
                     control={form.control}
                     name="profit_usd"
@@ -181,13 +225,20 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                         <FormItem>
                             <FormLabel>Profit (USD)</FormLabel>
                             <FormControl>
-                                <Input type="number" step="0.01" placeholder="50.00" {...field} />
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="50.00 (use negative for loss)"
+                                    className={`transition-colors ${profitBorderColor}`}
+                                    {...field}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
 
+                {/* Psychology Tags */}
                 <FormField
                     control={form.control}
                     name="tags"
@@ -195,34 +246,37 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                         <FormItem>
                             <FormLabel>Psychology Tags</FormLabel>
                             <div className="flex flex-wrap gap-2 pt-1">
-                                {[
-                                    { label: '✅ Followed Plan', value: 'Followed Plan' },
-                                    { label: '🤬 Revenge Trade', value: 'Revenge Trade' },
-                                    { label: '😰 FOMO', value: 'FOMO' },
-                                    { label: '🎉 Perfect Entry', value: 'Perfect Entry' },
-                                ].map((tag) => (
-                                    <Badge
-                                        key={tag.value}
-                                        variant={field.value?.includes(tag.label) ? 'default' : 'outline'}
-                                        className="cursor-pointer transition-all active:scale-95 py-1.5"
-                                        onClick={() => {
-                                            const current: string[] = field.value || []
-                                            if (current.includes(tag.label)) {
-                                                field.onChange(current.filter((t: string) => t !== tag.label))
-                                            } else {
-                                                field.onChange([...current, tag.label])
-                                            }
-                                        }}
-                                    >
-                                        {tag.label}
-                                    </Badge>
-                                ))}
+                                {PSYCHOLOGY_TAGS.map((tag) => {
+                                    const isSelected = field.value?.includes(tag.label)
+                                    return (
+                                        <Badge
+                                            key={tag.value}
+                                            variant={isSelected ? 'default' : 'outline'}
+                                            className={`cursor-pointer transition-all active:scale-95 py-1.5 select-none ${isSelected
+                                                    ? 'bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/30'
+                                                    : 'hover:border-primary/50 hover:text-primary'
+                                                }`}
+                                            onClick={() => {
+                                                const current: string[] = field.value || []
+                                                if (current.includes(tag.label)) {
+                                                    field.onChange(current.filter((t: string) => t !== tag.label))
+                                                } else {
+                                                    field.onChange([...current, tag.label])
+                                                }
+                                            }}
+                                        >
+                                            {isSelected && <span className="mr-1">✓</span>}
+                                            {tag.label}
+                                        </Badge>
+                                    )
+                                })}
                             </div>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
 
+                {/* Screenshot — Coming Soon */}
                 <div className="space-y-2">
                     <Label className="flex items-center gap-2">
                         Screenshot
@@ -244,8 +298,8 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                             <FormLabel>Notes</FormLabel>
                             <FormControl>
                                 <textarea
-                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="Strategy notes..."
+                                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                                    placeholder="Strategy notes, what went well, what to improve..."
                                     {...field}
                                 />
                             </FormControl>
@@ -254,10 +308,26 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                     )}
                 />
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? 'Adding...' : 'Add Trade'}
-                </Button>
+                {/* Inline error banner */}
+                {error && (
+                    <div className="error-banner">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>{error}</span>
+                    </div>
+                )}
 
+                <Button
+                    type="submit"
+                    className="w-full h-11 font-semibold transition-all"
+                    disabled={loading || success}
+                >
+                    {loading
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : success
+                            ? <><CheckCircle2 className="w-4 h-4 mr-2 text-green-400" /> Trade Added!</>
+                            : 'Add Trade'
+                    }
+                </Button>
             </form>
         </Form>
     )

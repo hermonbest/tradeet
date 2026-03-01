@@ -103,8 +103,8 @@ export default async function DashboardPage() {
                 {/* Hero stat with glow */}
                 <DashboardStats
                     title="Total Net P&L"
-                    value={`$${netPnLUsd.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                    subtitle={`≈ ETB ${netPnLEtb.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                    value={`$${netPnLUsd.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                    subtitle={`≈ ETB ${netPnLEtb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                     type={netPnLType}
                     glow={true}
                     icon={netPnLUsd >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
@@ -133,14 +133,14 @@ export default async function DashboardPage() {
 
                 <DashboardStats
                     title="Avg. Win"
-                    value={`$${avgWin.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                    value={`$${avgWin.toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                     subtitle={`${winnersCount} wins`}
                     type="profit"
                 />
 
                 <DashboardStats
                     title="Avg. Loss"
-                    value={`-$${Math.abs(avgLoss).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}
+                    value={`-$${Math.abs(avgLoss).toLocaleString('en-US', { maximumFractionDigits: 2 })}`}
                     subtitle={`${losersCount} losses`}
                     type="loss"
                 />
