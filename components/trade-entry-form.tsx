@@ -154,7 +154,7 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                             <FormItem>
                                 <FormLabel>Entry Price</FormLabel>
                                 <FormControl>
-                                    <Input type="number" step="0.00001" placeholder="1.1000" {...field} />
+                                    <Input type="number" step="0.00001" placeholder="1.3000" {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -253,8 +253,8 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                                             key={tag.value}
                                             variant={isSelected ? 'default' : 'outline'}
                                             className={`cursor-pointer transition-all active:scale-95 py-1.5 select-none ${isSelected
-                                                    ? 'bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/30'
-                                                    : 'hover:border-primary/50 hover:text-primary'
+                                                ? 'bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/30'
+                                                : 'hover:border-primary/50 hover:text-primary'
                                                 }`}
                                             onClick={() => {
                                                 const current: string[] = field.value || []

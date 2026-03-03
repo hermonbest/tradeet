@@ -37,7 +37,7 @@ async function seed() {
             lot_size: 0.5,
             profit_usd: 350.00,
             notes: 'Trend following on H4. Breaking previous resistance.',
-            trade_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            trade_date: new Date(Date.now() - 5 * 24 * 60 * 60 * 3000).toISOString().split('T')[0]
         },
         {
             user_id: userId,
@@ -49,7 +49,7 @@ async function seed() {
             lot_size: 0.1,
             profit_usd: 85.50,
             notes: 'Short on supply zone retest.',
-            trade_date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            trade_date: new Date(Date.now() - 4 * 24 * 60 * 60 * 3000).toISOString().split('T')[0]
         },
         {
             user_id: userId,
@@ -61,7 +61,7 @@ async function seed() {
             lot_size: 0.05,
             profit_usd: -52.50,
             notes: 'Hit stop loss on news volatility.',
-            trade_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            trade_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 3000).toISOString().split('T')[0]
         },
         {
             user_id: userId,
@@ -73,7 +73,7 @@ async function seed() {
             lot_size: 0.01,
             profit_usd: -8.00,
             notes: 'Premature entry on a weekend.',
-            trade_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            trade_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 3000).toISOString().split('T')[0]
         },
         {
             user_id: userId,
@@ -85,7 +85,7 @@ async function seed() {
             lot_size: 1.0,
             profit_usd: 1060.00,
             notes: 'Long ride on DXY strength.',
-            trade_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            trade_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 3000).toISOString().split('T')[0]
         },
         {
             user_id: userId,

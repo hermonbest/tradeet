@@ -7,8 +7,8 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-inter);
-    --font-mono: var(--font-jetbrains);
+    --font-sans: "Inter", sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -46,58 +46,49 @@
     --radius-3xl: calc(var(--radius) + 12px);
     --radius-4xl: calc(var(--radius) + 16px);
 
-    /* TradeET Semantic Colors */
-    --color-profit: #22c55e;
-    --color-loss: #ef4444;
-    --color-brand: #8b5cf6;
+    /* New Design Colors */
+    --color-profit: #10B981;
+    --color-loss: #EF4444;
+    --color-brand: #7C3AED;
 }
 
 /* =====================================================
-   TradeET Theme — Dark Mode First
-   Vibe: Professional, Futuristic, Clean
-   Influence: Stripe Dashboard, Phantom Wallet, Bloomberg
+   TradeET Theme — Dark Mode First with Purple Primary
+   Vibe: Professional, Modern Mobile-First Trading
+   Primary: #7C3AED (Purple)
    ===================================================== */
 
 :root {
     --radius: 0.75rem;
-
-    /* TradeET Dark Theme (always dark) */
-    --background: oklch(0.08 0 0);
-    /* #09090b — pure near-black */
-    --foreground: oklch(0.985 0 0);
-    /* #ffffff — off-white */
-
-    --card: oklch(0.12 0 0);
-    /* #18181b — zinc-900 elevated */
-    --card-foreground: oklch(0.985 0 0);
-
-    --popover: oklch(0.14 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-
-    --primary: oklch(0.55 0.22 290);
-    /* Electric Violet #8b5cf6 */
-    --primary-foreground: oklch(0.985 0 0);
-
-    --secondary: oklch(0.18 0 0);
-    /* zinc-800 hover states */
-    --secondary-foreground: oklch(0.985 0 0);
-
-    --muted: oklch(0.18 0 0);
-    --muted-foreground: oklch(0.45 0 0);
-    /* #71717a zinc-500 */
-
-    --accent: oklch(0.55 0.22 290);
-    /* Violet accent */
-    --accent-foreground: oklch(0.985 0 0);
-
-    --destructive: oklch(0.55 0.22 27);
-    /* #ef4444 soft red */
-
-    --border: oklch(0.22 0 0);
-    /* #27272a zinc-800 subtle */
-    --input: oklch(0.08 0 0);
-    /* darker than card for inputs */
-    --ring: oklch(0.55 0.22 290);
+    
+    /* Dark Theme Colors */
+    --background: #0A0A0A;
+    --foreground: #F9FAFB;
+    
+    --card: #121212;
+    --card-foreground: #F9FAFB;
+    
+    --popover: #18181B;
+    --popover-foreground: #F9FAFB;
+    
+    /* Purple Primary #7C3AED */
+    --primary: #7C3AED;
+    --primary-foreground: #FFFFFF;
+    
+    --secondary: #27272A;
+    --secondary-foreground: #F9FAFB;
+    
+    --muted: #27272A;
+    --muted-foreground: #71717A;
+    
+    --accent: #7C3AED;
+    --accent-foreground: #FFFFFF;
+    
+    --destructive: #EF4444;
+    
+    --border: #27272A;
+    --input: #18181B;
+    --ring: #7C3AED;
     /* Violet focus ring */
 
     /* Chart colors using semantic TradeET palette */
@@ -246,6 +237,98 @@ input:focus {
 
 .tradeet-card {
     @apply bg-card/40 border-border/40 backdrop-blur-[2px] rounded-2xl;
+}
+
+/* ── iOS/Mobile Specific Styles ────────────────────────── */
+.ios-blur {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+/* Win Rate Ring - Conic Gradient */
+.win-rate-ring {
+    background: conic-gradient(
+        #EF4444 0% var(--loss-percent, 65%),
+        #374151 var(--loss-percent, 65%) var(--neutral-percent, 90%),
+        #10B981 var(--neutral-percent, 90%) 100%
+    );
+    border-radius: 50%;
+    mask: radial-gradient(transparent 62%, black 63%);
+    -webkit-mask: radial-gradient(transparent 62%, black 63%);
+}
+
+/* Spider Web Background for Trade Score */
+.spider-web {
+    background-image: radial-gradient(circle, #374151 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Material Icons Round */
+.material-icons-round {
+    font-family: 'Material Icons Round', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar for mobile */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Glass Effect for Bottom Nav */
+.glass-effect {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background: rgba(18, 18, 18, 0.8);
+}
+
+/* Safe area padding for notched devices */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Prevent pull-to-refresh on mobile */
+body {
+    overscroll-behavior-y: contain;
+}
+
+/* iOS tap highlight */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-first padding adjustments */
+@media (max-width: 640px) {
+    .page-content {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 }
 
 /* ── Interactive Reveal Animations ──────────────────────── */

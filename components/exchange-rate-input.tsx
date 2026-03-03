@@ -15,7 +15,7 @@ export function ExchangeRateInput({ initialRate }: { initialRate: number }) {
     const validate = (value: string) => {
         const num = parseFloat(value)
         if (isNaN(num) || num <= 0) return 'Rate must be a positive number.'
-        if (num > 100000) return 'Rate seems unrealistically high.'
+        if (num > 300000) return 'Rate seems unrealistically high.'
         return null
     }
 

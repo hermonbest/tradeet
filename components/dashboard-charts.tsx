@@ -166,7 +166,7 @@ export function EquityCurveChart({ data }: ChartProps) {
                         fill={`url(#${gradientId})`}
                         strokeWidth={2}
                         isAnimationActive={true}
-                        animationDuration={1000}
+                        animationDuration={3000}
                         animationEasing="ease-out"
                         dot={false}
                         activeDot={{ r: 4, fill: lineColor, strokeWidth: 0 }}

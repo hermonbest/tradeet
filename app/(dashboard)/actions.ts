@@ -3,6 +3,8 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { generateAffiliateCode } from '@/lib/affiliate'
+import { calculateCommission } from '@/lib/constants'
 
 // ... existing actions (addTrade, deleteTrade, updateExchangeRate)
 
@@ -140,7 +142,12 @@ export async function updateExchangeRate(rate: number) {
     return { success: true }
 }
 
-export async function submitPayment(data: { phone_number: string, screenshot_url: string }) {
+export async function submitPayment(data: {
+    phone_number: string,
+    screenshot_url: string,
+    amount?: number,
+    referral_code?: string
+}) {
     const supabase = await createClient()
     const { data: userData } = await supabase.auth.getUser()
 
@@ -150,24 +157,22 @@ export async function submitPayment(data: { phone_number: string, screenshot_url
         user_id: userData.user.id,
         phone_number: data.phone_number,
         screenshot_url: data.screenshot_url,
+        amount: data.amount || 3000,
+        referral_code: data.referral_code || null,
         status: 'pending'
     })
 
     if (error) return { error: error.message }
 
     // Email Notification logic
-    console.log(`[PAYMENT_ALERT] New payment submitted by ${userData.user.email}. Receipt: ${data.screenshot_url}. Alerting hermonbest@gmail.com`)
-
-    // Note: To send a real email, install 'resend' and use:
-    // const resend = new Resend(process.env.RESEND_API_KEY);
-    // await resend.emails.send({ ... });
+    console.log(`[PAYMENT_ALERT] New payment submitted by ${userData.user.email}. Amount: ${data.amount || 3000} ETB. Receipt: ${data.screenshot_url}. Alerting hermonbest@gmail.com`)
 
     revalidatePath('/upgrade')
     revalidatePath('/admin')
     return { success: true }
 }
 
-export async function approvePayment(paymentId: string, userId: string) {
+export async function approvePayment(paymentId: string, userId: string, actualAmount?: number) {
     const supabase = await createClient()
     const { data: userData } = await supabase.auth.getUser()
 
@@ -177,7 +182,14 @@ export async function approvePayment(paymentId: string, userId: string) {
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', userData.user.id).single()
     if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
-    // Update profile
+    // Get payment details including referral code
+    const { data: payment } = await supabase
+        .from('payments')
+        .select('referral_code, amount')
+        .eq('id', paymentId)
+        .single()
+
+    // Update profile to pro
     const { error: profileError } = await supabase
         .from('profiles')
         .update({ role: 'pro' })
@@ -185,13 +197,58 @@ export async function approvePayment(paymentId: string, userId: string) {
 
     if (profileError) return { error: profileError.message }
 
-    // Update payment status
+    // Set actual amount if provided
+    const finalAmount = actualAmount || payment?.amount || 3000
+
+    // Update payment status with actual amount
     const { error: paymentError } = await supabase
         .from('payments')
-        .update({ status: 'approved' })
+        .update({
+            status: 'approved',
+            actual_amount: finalAmount
+        })
         .eq('id', paymentId)
 
     if (paymentError) return { error: paymentError.message }
+
+    // Record commission if referral code was used
+    if (payment?.referral_code) {
+        // Find the affiliate
+        const { data: affiliate } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('affiliate_code', payment.referral_code.toUpperCase())
+            .single()
+
+        if (affiliate && affiliate.id !== userId) {
+            // Check if commission already exists
+            const { data: existingCommission } = await supabase
+                .from('commissions')
+                .select('id')
+                .eq('affiliate_id', affiliate.id)
+                .eq('referred_user_id', userId)
+                .single()
+
+            if (!existingCommission) {
+                const commissionAmount = calculateCommission(finalAmount)
+
+                // Create commission record
+                const { error: commissionError } = await supabase
+                    .from('commissions')
+                    .insert({
+                        affiliate_id: affiliate.id,
+                        referred_user_id: userId,
+                        amount_due: commissionAmount,
+                        status: 'pending',
+                        payment_id: paymentId
+                    })
+
+                if (commissionError) {
+                    console.error('Error creating commission:', commissionError)
+                }
+            }
+        }
+    }
 
     revalidatePath('/admin')
     return { success: true }
@@ -256,4 +313,306 @@ export async function deleteAccount() {
     // Sign out to clear local session cookies
     await supabase.auth.signOut()
     redirect('/login')
+}
+
+// ==================== AFFILIATE SYSTEM ACTIONS ====================
+
+// Generate affiliate code for current user
+export async function generateUserAffiliateCode() {
+    const supabase = await createClient()
+    const { data: userData, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    // Check if user already has a code
+    const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('affiliate_code, name')
+        .eq('id', userData.user.id)
+        .single()
+
+    if (existingProfile?.affiliate_code) {
+        return { error: 'You already have an affiliate code', code: existingProfile.affiliate_code }
+    }
+
+    // Generate unique code
+    let code: string
+    let attempts = 0
+    const maxAttempts = 10
+
+    do {
+        code = generateAffiliateCode(existingProfile?.name || userData.user.email?.split('@')[0])
+
+        // Check if code is unique
+        const { data: existing } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('affiliate_code', code)
+            .single()
+
+        if (!existing) break
+        attempts++
+    } while (attempts < maxAttempts)
+
+    if (attempts >= maxAttempts) {
+        return { error: 'Could not generate unique code. Please try again.' }
+    }
+
+    // Save code to profile
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ affiliate_code: code })
+        .eq('id', userData.user.id)
+
+    if (updateError) {
+        return { error: updateError.message }
+    }
+
+    revalidatePath('/settings')
+    revalidatePath('/affiliate')
+    return { success: true, code }
+}
+
+// Apply referral code to current user
+export async function applyReferralCode(code: string) {
+    const supabase = await createClient()
+    const { data: userData, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    // Validate code
+    const { data: affiliate, error: affiliateError } = await supabase
+        .from('profiles')
+        .select('id, is_influencer, affiliate_code')
+        .eq('affiliate_code', code.toUpperCase().trim())
+        .single()
+
+    if (affiliateError || !affiliate) {
+        return { error: 'Invalid referral code' }
+    }
+
+    // Prevent self-referral
+    if (affiliate.id === userData.user.id) {
+        return { error: 'Cannot use your own referral code' }
+    }
+
+    // Apply referral
+    const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ referred_by_id: affiliate.id })
+        .eq('id', userData.user.id)
+
+    if (updateError) {
+        return { error: updateError.message }
+    }
+
+    return {
+        success: true,
+        isInfluencer: affiliate.is_influencer,
+        message: affiliate.is_influencer
+            ? '🎉 Influencer code applied! You get 20% off.'
+            : 'Referral code applied!'
+    }
+}
+
+// Get affiliate stats for current user
+export async function getUserAffiliateStats() {
+    const supabase = await createClient()
+    const { data: userData, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    // Get profile with affiliate info
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('affiliate_code, is_influencer, referred_by_id')
+        .eq('id', userData.user.id)
+        .single()
+
+    if (profileError) {
+        return { error: profileError.message }
+    }
+
+    // Get commissions
+    const { data: commissions, error: commissionError } = await supabase
+        .from('commissions')
+        .select('*')
+        .eq('affiliate_id', userData.user.id)
+
+    if (commissionError) {
+        console.error('Error fetching commissions:', commissionError)
+    }
+
+    // Get referral count
+    const { count: referralCount, error: countError } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('referred_by_id', userData.user.id)
+
+    if (countError) {
+        console.error('Error counting referrals:', countError)
+    }
+
+    const commissionList = commissions || []
+    const pendingCommissions = commissionList.filter(c => c.status === 'pending')
+    const paidCommissions = commissionList.filter(c => c.status === 'paid')
+
+    const pendingEarnings = pendingCommissions.reduce((sum, c) => sum + (c.amount_due || 0), 0)
+    const totalPaidEarnings = paidCommissions.reduce((sum, c) => sum + (c.amount_due || 0), 0)
+
+    return {
+        affiliateCode: profile?.affiliate_code,
+        isInfluencer: profile?.is_influencer,
+        referredById: profile?.referred_by_id,
+        totalReferrals: referralCount || 0,
+        pendingCommissions: pendingCommissions.length,
+        paidCommissions: paidCommissions.length,
+        pendingEarnings,
+        totalPaidEarnings,
+        totalEarnings: pendingEarnings + totalPaidEarnings,
+        commissions: commissionList
+    }
+}
+
+// Toggle influencer status (admin only)
+export async function toggleInfluencerStatusAction(userId: string, isInfluencer: boolean) {
+    const supabase = await createClient()
+    const { data: userData, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    // Check if admin
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single()
+
+    if (profileError || profile?.role !== 'admin') {
+        return { error: 'Unauthorized' }
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ is_influencer: isInfluencer })
+        .eq('id', userId)
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/admin')
+    return { success: true }
+}
+
+// Mark commission as paid (admin only)
+export async function payCommission(commissionId: string) {
+    const supabase = await createClient()
+    const { data: userData, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    // Check if admin
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single()
+
+    if (profileError || profile?.role !== 'admin') {
+        return { error: 'Unauthorized' }
+    }
+
+    const { error } = await supabase
+        .from('commissions')
+        .update({ status: 'paid' })
+        .eq('id', commissionId)
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/admin')
+    return { success: true }
+}
+
+// Get all affiliates with stats (admin only)
+export async function getAffiliatesAdmin() {
+    const supabase = await createClient()
+    const { data: userData, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    // Check if admin
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single()
+
+    if (profileError || profile?.role !== 'admin') {
+        return { error: 'Unauthorized' }
+    }
+
+    // Get all affiliates
+    const { data: affiliates, error: affiliatesError } = await supabase
+        .from('profiles')
+        .select('id, email, name, affiliate_code, is_influencer, created_at')
+        .not('affiliate_code', 'is', null)
+        .order('created_at', { ascending: false })
+
+    if (affiliatesError) {
+        return { error: affiliatesError.message }
+    }
+
+    // Get commissions for all affiliates
+    const { data: commissions, error: commissionsError } = await supabase
+        .from('commissions')
+        .select('*')
+
+    if (commissionsError) {
+        console.error('Error fetching commissions:', commissionsError)
+    }
+
+    // Get referral counts
+    const { data: referrals, error: referralsError } = await supabase
+        .from('profiles')
+        .select('referred_by_id')
+        .not('referred_by_id', 'is', null)
+
+    if (referralsError) {
+        console.error('Error fetching referrals:', referralsError)
+    }
+
+    // Calculate stats for each affiliate
+    const affiliatesWithStats = (affiliates || []).map(affiliate => {
+        const affiliateCommissions = (commissions || []).filter(c => c.affiliate_id === affiliate.id)
+        const referralCount = (referrals || []).filter(r => r.referred_by_id === affiliate.id).length
+
+        return {
+            ...affiliate,
+            totalReferrals: referralCount,
+            totalCommissions: affiliateCommissions.length,
+            pendingCommissions: affiliateCommissions.filter(c => c.status === 'pending').length,
+            paidCommissions: affiliateCommissions.filter(c => c.status === 'paid').length,
+            totalEarnings: affiliateCommissions.reduce((sum, c) => sum + (c.amount_due || 0), 0),
+            pendingEarnings: affiliateCommissions
+                .filter(c => c.status === 'pending')
+                .reduce((sum, c) => sum + (c.amount_due || 0), 0)
+        }
+    })
+
+    return { affiliates: affiliatesWithStats }
 }

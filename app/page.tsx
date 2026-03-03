@@ -30,7 +30,7 @@ const FEATURES = [
     },
     {
         icon: Zap,
-        title: 'Zella Performance Score',
+        title: 'Trader Performance Score',
         desc: 'A single number that weighs your win rate, profit factor, consistency, and risk-reward ratio.',
         color: '#8b5cf6',
     },
@@ -43,7 +43,7 @@ const FEATURES = [
 ]
 
 const FREE_FEATURES = ['Up to 50 trades', 'Full dashboard & charts', 'Trade calendar', 'Psychology tags', 'ETB converter']
-const PRO_FEATURES = ['Everything in Free', 'Unlimited trade logging', 'Zella Performance Score', 'Screenshot upload', 'Priority support', 'All future features']
+const PRO_FEATURES = ['Everything in Free', 'Unlimited trade logging', 'Trader Performance Score', 'Screenshot upload', 'Priority support', 'All future features']
 
 const STATS = [
     { value: '50+', label: 'Traders Journaling' },

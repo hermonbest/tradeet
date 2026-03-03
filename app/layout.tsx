@@ -26,6 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
+      <head>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet" />
+      </head>
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}>
         {children}
       </body>

@@ -7,8 +7,14 @@ import { Label } from '@/components/ui/label'
 import { submitPayment } from '@/app/(dashboard)/actions'
 import { createClient } from '@/utils/supabase/client'
 import { Check, Upload } from 'lucide-react'
+import { formatPrice } from '@/lib/constants'
 
-export function PaymentForm() {
+interface PaymentFormProps {
+    amount: number
+    referralCode?: string
+}
+
+export function PaymentForm({ amount, referralCode }: PaymentFormProps) {
     const [phone, setPhone] = useState('')
     const [file, setFile] = useState<File | null>(null)
     const [loading, setLoading] = useState(false)
@@ -47,7 +53,9 @@ export function PaymentForm() {
 
         const result = await submitPayment({
             phone_number: phone,
-            screenshot_url: publicData.publicUrl
+            screenshot_url: publicData.publicUrl,
+            amount: amount,
+            referral_code: referralCode
         })
 
         if (result.error) {
@@ -69,6 +77,11 @@ export function PaymentForm() {
                 <p className="text-muted-foreground text-sm max-w-xs mx-auto">
                     We are reviewing your payment receipt. Your account will be automatically upgraded to Pro within 24 hours.
                 </p>
+                {referralCode && (
+                    <p className="text-xs text-[#22c55e]">
+                        Referral code <strong>{referralCode}</strong> has been recorded.
+                    </p>
+                )}
             </div>
         )
     }
@@ -77,7 +90,9 @@ export function PaymentForm() {
         <div className="tradeet-card p-6 space-y-5">
             <div>
                 <h3 className="font-semibold text-foreground">Payment Details</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Fill in your details and upload your transfer receipt.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                    Amount to pay: <strong className="text-primary">{formatPrice(amount)}</strong>
+                </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -127,7 +142,7 @@ export function PaymentForm() {
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25"
                     disabled={loading || !file || !phone}
                 >
-                    {loading ? 'Submitting...' : '⚡ Submit Verification Request'}
+                    {loading ? 'Submitting...' : `⚡ Submit Payment (${formatPrice(amount)})`}
                 </Button>
 
                 <p className="text-xs text-center text-muted-foreground">

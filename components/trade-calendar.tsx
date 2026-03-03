@@ -93,124 +93,132 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
             </div>
 
             {/* High-Density Calendar Grid */}
-            <div className="overflow-x-auto">
-                <div className="min-w-[340px] md:min-w-[800px]">
-                    {/* Weekday Headers */}
-                    <div className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_120px] mb-2 border-b border-border/30 pb-2">
-                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                            <div key={day} className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                {day}
-                            </div>
-                        ))}
-                        <div className="hidden md:block text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                            Weekly
+            <div className="w-full">
+                {/* Weekday Headers */}
+                <div className="grid grid-cols-7 mb-2 border-b border-border/30 pb-2">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                        <div key={day} className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            {day}
                         </div>
-                    </div>
+                    ))}
+                </div>
 
-                    {/* Days Grid */}
-                    <div className="space-y-1">
-                        {weeks.map((week, weekIdx) => {
-                            let weeklyPnL = 0
-                            let weeklyDays = 0
-                            week.forEach(day => {
-                                const dateStr = format(day, 'yyyy-MM-dd')
-                                if (dailyPnL[dateStr] && isSameMonth(day, currentMonth)) {
-                                    weeklyPnL += dailyPnL[dateStr].amount
-                                    weeklyDays += 1
-                                }
-                            })
+                {/* Days Grid */}
+                <div className="space-y-1">
+                    {weeks.map((week, weekIdx) => {
+                        let weeklyPnL = 0
+                        let weeklyDays = 0
+                        week.forEach(day => {
+                            const dateStr = format(day, 'yyyy-MM-dd')
+                            if (dailyPnL[dateStr] && isSameMonth(day, currentMonth)) {
+                                weeklyPnL += dailyPnL[dateStr].amount
+                                weeklyDays += 1
+                            }
+                        })
 
-                            return (
-                                <div key={weekIdx} className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_120px] gap-1 min-h-[60px] md:min-h-[100px]">
-                                    {week.map((day, dayIdx) => {
-                                        const dateStr = format(day, 'yyyy-MM-dd')
-                                        const stats = dailyPnL[dateStr]
-                                        const isOutside = !isSameMonth(day, currentMonth)
+                        return (
+                            <div key={weekIdx} className="grid grid-cols-7 gap-1 min-h-[70px] md:min-h-[110px]">
+                                {week.map((day, dayIdx) => {
+                                    const dateStr = format(day, 'yyyy-MM-dd')
+                                    const stats = dailyPnL[dateStr]
+                                    const isOutside = !isSameMonth(day, currentMonth)
 
-                                        let cellClass = 'relative border rounded-lg p-1 md:p-2 transition-all flex flex-col justify-between '
-                                        if (isOutside) {
-                                            cellClass += 'border-border/10 bg-muted/5 opacity-20'
-                                        } else if (stats) {
-                                            cellClass += stats.amount >= 0
-                                                ? 'bg-green-500/8 border-green-500/25 hover:border-green-500/40'
-                                                : 'bg-red-500/8 border-red-500/25 hover:border-red-500/40'
-                                        } else {
-                                            cellClass += 'bg-card/40 border-border/40 hover:bg-muted/20 hover:border-border/60'
-                                        }
+                                    let cellClass = 'relative border rounded-lg p-1 md:p-1.5 transition-all flex flex-col justify-between '
+                                    if (isOutside) {
+                                        cellClass += 'border-border/10 bg-muted/5 opacity-20'
+                                    } else if (stats) {
+                                        cellClass += stats.amount >= 0
+                                            ? 'bg-green-500/8 border-green-500/25 hover:border-green-500/40'
+                                            : 'bg-red-500/8 border-red-500/25 hover:border-red-500/40'
+                                    } else {
+                                        cellClass += 'bg-card/40 border-border/40 hover:bg-muted/20 hover:border-border/60'
+                                    }
 
-                                        return (
-                                            <div key={dayIdx} className={cellClass} title={dateStr}>
-                                                <div className="flex justify-between items-start">
-                                                    <span className={`text-[9px] md:text-[11px] font-semibold ${isOutside ? 'text-muted-foreground/30' : 'text-muted-foreground'}`}>
-                                                        {format(day, 'd')}
-                                                    </span>
-                                                </div>
-
-                                                {!isOutside && stats ? (
-                                                    <div className="flex flex-col items-center justify-center flex-1 min-h-0">
-                                                        <div className={`text-[10px] md:text-sm font-bold num ${stats.amount >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                                                            {stats.amount >= 0 ? '+' : '-'}${Math.abs(stats.amount) >= 1000
-                                                                ? `${(Math.abs(stats.amount) / 1000).toFixed(1)}K`
-                                                                : Math.abs(stats.amount).toFixed(0)}
-                                                        </div>
-                                                        {/* Desktop: clickable trade pills */}
-                                                        <div className="hidden md:flex flex-col gap-1 w-full mt-1">
-                                                            {trades
-                                                                .filter(t => t.trade_date && t.trade_date.split('T')[0] === dateStr)
-                                                                .map(trade => (
-                                                                    <button
-                                                                        key={trade.id}
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation()
-                                                                            setSelectedTrade(trade)
-                                                                        }}
-                                                                        className={`flex items-center justify-between px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors ${trade.profit_usd >= 0
-                                                                            ? 'bg-green-900/30 text-green-400 hover:bg-green-900/50'
-                                                                            : 'bg-red-900/30 text-red-400 hover:bg-red-900/50'
-                                                                            }`}
-                                                                    >
-                                                                        <span className="truncate">{trade.pair}</span>
-                                                                        {trade.profit_usd >= 0
-                                                                            ? <TrendingUp size={8} className="ml-0.5 shrink-0" />
-                                                                            : <TrendingDown size={8} className="ml-0.5 shrink-0" />}
-                                                                    </button>
-                                                                ))
-                                                            }
-                                                        </div>
-                                                        {/* Mobile: trade count */}
-                                                        <div className="md:hidden mt-0.5">
-                                                            {stats.count > 1 && <span className="text-[8px] text-muted-foreground">({stats.count})</span>}
-                                                        </div>
-                                                    </div>
-                                                ) : !isOutside && (
-                                                    <div className="flex-1" />
-                                                )}
+                                    return (
+                                        <div key={dayIdx} className={cellClass} title={dateStr}>
+                                            <div className="flex justify-between items-start">
+                                                <span className={`text-[9px] md:text-[11px] font-semibold ${isOutside ? 'text-muted-foreground/30' : 'text-muted-foreground'}`}>
+                                                    {format(day, 'd')}
+                                                </span>
                                             </div>
-                                        )
-                                    })}
 
-                                    {/* Weekly Stats Cell */}
-                                    <div className="hidden md:flex bg-muted/10 border border-dashed border-border/40 rounded-lg p-2 flex-col justify-center items-center text-center">
-                                        <div className="text-[9px] uppercase font-bold text-muted-foreground mb-1 tracking-widest">Wk {weekIdx + 1}</div>
-                                        {weeklyDays > 0 ? (
-                                            <>
-                                                <div className={`num text-sm font-bold ${weeklyPnL >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                                                    {weeklyPnL >= 0 ? '+' : '-'}${Math.abs(weeklyPnL) >= 1000
-                                                        ? `${(Math.abs(weeklyPnL) / 1000).toFixed(1)}K`
-                                                        : Math.abs(weeklyPnL).toFixed(0)}
+                                            {!isOutside && stats ? (
+                                                <div className="flex flex-col items-center justify-center flex-1 min-h-0 gap-0.5">
+                                                    <div className={`text-[10px] md:text-sm font-bold num flex items-center gap-1 ${stats.amount >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                                                        {stats.amount >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                                        {stats.amount >= 0 ? '+' : '-'}${Math.abs(stats.amount).toFixed(2)}
+                                                    </div>
+                                                    {/* Desktop: clickable trade pills with pair and result */}
+                                                    <div className="hidden md:flex flex-col gap-0.5 w-full">
+                                                        {trades
+                                                            .filter(t => t.trade_date && t.trade_date.split('T')[0] === dateStr)
+                                                            .slice(0, 2)
+                                                            .map(trade => (
+                                                                <button
+                                                                    key={trade.id}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        setSelectedTrade(trade)
+                                                                    }}
+                                                                    className={`flex items-center justify-between px-1 py-0.5 rounded text-[8px] font-medium leading-tight transition-all ${trade.profit_usd >= 0
+                                                                        ? 'bg-green-500/10 text-green-700 border border-green-500/20 hover:bg-green-500/20 dark:bg-green-500/15 dark:text-green-400 dark:border-green-500/25'
+                                                                        : 'bg-red-500/10 text-red-700 border border-red-500/20 hover:bg-red-500/20 dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/25'
+                                                                        }`}
+                                                                    title={`${trade.pair}: ${trade.profit_usd >= 0 ? '+' : '-'}${Math.abs(trade.profit_usd).toFixed(2)}`}
+                                                                >
+                                                                    <span className="truncate font-medium">{trade.pair}</span>
+                                                                    <span className={`num shrink-0 ml-0.5 ${trade.profit_usd >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                                                                        {trade.profit_usd >= 0 ? '+' : '-'}${Math.abs(trade.profit_usd).toFixed(0)}
+                                                                    </span>
+                                                                </button>
+                                                            ))
+                                                        }
+                                                        {trades.filter(t => t.trade_date && t.trade_date.split('T')[0] === dateStr).length > 2 && (
+                                                            <span className="text-[7px] text-muted-foreground text-center leading-tight">
+                                                                +{trades.filter(t => t.trade_date && t.trade_date.split('T')[0] === dateStr).length - 2} more
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {/* Mobile: trade summary */}
+                                                    <div className="md:hidden w-full mt-0.5">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                const dayTrades = trades.filter(t => t.trade_date && t.trade_date.split('T')[0] === dateStr)
+                                                                if (dayTrades.length === 1) {
+                                                                    setSelectedTrade(dayTrades[0])
+                                                                }
+                                                            }}
+                                                            className="w-full"
+                                                        >
+                                                            {stats.count === 1 ? (
+                                                                <div className={`flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-medium leading-tight ${trades.find(t => t.trade_date?.split('T')[0] === dateStr)?.profit_usd >= 0
+                                                                    ? 'bg-green-500/10 text-green-700 border border-green-500/20'
+                                                                    : 'bg-red-500/10 text-red-700 border border-red-500/20'
+                                                                    }`}>
+                                                                    <span className="truncate">
+                                                                        {trades.find(t => t.trade_date?.split('T')[0] === dateStr)?.pair}
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-center justify-center">
+                                                                    <span className="text-[9px] font-medium text-muted-foreground">
+                                                                        {stats.count} trades
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <div className="text-[9px] text-muted-foreground mt-0.5">
-                                                    {weeklyDays} day{weeklyDays !== 1 && 's'}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="text-[9px] text-muted-foreground/40">—</div>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
+                                            ) : !isOutside && (
+                                                <div className="flex-1" />
+                                            )}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        )
+                    })}
                 </div>
             </div>
 

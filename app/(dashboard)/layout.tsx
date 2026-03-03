@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
+import { MobileBottomNav } from '@/components/mobile-bottom-nav'
 
 export default async function DashboardLayout({
     children,
@@ -18,13 +19,15 @@ export default async function DashboardLayout({
     return (
         <SidebarProvider>
             <AppSidebar />
-            <main className="w-full flex-1 min-h-screen">
+            <main className="w-full flex-1 min-h-screen pb-24">
                 <div className="sticky top-0 z-10 flex items-center h-10 px-3 border-b border-border/40 bg-background/80 backdrop-blur-sm">
                     <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
                 </div>
                 <div className="page-enter">
                     {children}
                 </div>
+                {/* mobile bottom navigation shared across dashboard pages */}
+                <MobileBottomNav />
             </main>
         </SidebarProvider>
     )

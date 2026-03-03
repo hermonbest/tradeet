@@ -137,7 +137,7 @@ export function AppSidebar() {
                                 <Zap className="w-4 h-4 fill-primary animate-pulse" />
                                 <div className="flex flex-col">
                                     <span className="text-xs font-bold leading-tight">Upgrade to Pro</span>
-                                    <span className="text-[10px] opacity-70 leading-tight">Unlock Zella Score</span>
+                                    <span className="text-[10px] opacity-70 leading-tight">Unlock Trader Score</span>
                                 </div>
                             </Link>
                         </SidebarGroupContent>

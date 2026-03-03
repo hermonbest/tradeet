@@ -160,7 +160,7 @@ export function EditTradeModal({ trade, isOpen, onClose }: { trade: any; isOpen:
                                         <FormItem>
                                             <FormLabel>Entry Price</FormLabel>
                                             <FormControl>
-                                                <Input type="number" step="0.00001" placeholder="1.1000" {...field} />
+                                                <Input type="number" step="0.00001" placeholder="1.3000" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
