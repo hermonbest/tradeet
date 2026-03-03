@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from '@/utils/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
@@ -8,6 +9,14 @@ import { Settings, Zap, ShieldAlert, Award, Star, Users, DollarSign, ExternalLin
 import { Badge } from '@/components/ui/badge'
 import { getUserAffiliateStats } from '@/app/(dashboard)/actions'
 import { formatPrice } from '@/lib/constants'
+
+export const metadata: Metadata = {
+  title: "Settings — Configure Your Trading Journal",
+  description: "Manage your TradeET account settings, exchange rates, and preferences. Customize your trading journal experience.",
+  alternates: {
+    canonical: "https://tradeet.app/settings",
+  },
+};
 
 export default async function SettingsPage() {
     const supabase = await createClient()

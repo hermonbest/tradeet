@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from '@/utils/supabase/server'
 import { PaymentForm } from '@/components/payment-form'
 import { PriceDisplay } from '@/components/referral-input'
@@ -6,6 +7,14 @@ import { Check, X, Zap, ShieldCheck, Lock } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { AFFILIATE_CONSTANTS, calculatePrice } from '@/lib/constants'
+
+export const metadata: Metadata = {
+  title: "Upgrade — Unlock Pro Trading Features",
+  description: "Upgrade to TradeET Pro for unlimited trade logging, advanced analytics, Trader Performance Score, and screenshot uploads. One-time payment of 3,000 ETB.",
+  alternates: {
+    canonical: "https://tradeet.app/upgrade",
+  },
+};
 
 const FREE_FEATURES = [
     { label: 'Up to 50 trades', available: true },

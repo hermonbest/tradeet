@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import { TrendingUp } from 'lucide-react'
 import { LoginForm } from './login-form'
+
+export const metadata: Metadata = {
+  title: "Login — Start Your Trading Journal",
+  description: "Sign in to TradeET, Ethiopia's leading trading journal platform. Track your trades, analyze performance, and improve your trading with ETB currency support.",
+  alternates: {
+    canonical: "https://tradeet.app/login",
+  },
+};
 
 export default async function LoginPage({
     searchParams,

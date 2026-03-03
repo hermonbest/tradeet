@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from '@/utils/supabase/server'
 import { TradeList } from '@/components/trade-list'
 import { AddTradeDialog } from '@/components/add-trade-dialog'
@@ -20,6 +21,14 @@ import { cn } from '@/lib/utils'
 import { DashboardStats } from '@/components/dashboard-stats'
 
 import { WinRateDonut, EquityCurveChart, WinRateByDaysDonut, DailyPnLChart, ProgressHeatmap, PerformanceRadarChart } from '@/components/dashboard-charts'
+
+export const metadata: Metadata = {
+  title: "Dashboard — Your Trading Performance Analytics",
+  description: "View your trading performance metrics, equity curve, win rate analysis, and P&L tracking. Track your progress with ETB currency support on TradeET.",
+  alternates: {
+    canonical: "https://tradeet.app/dashboard",
+  },
+};
 
 export default async function DashboardPage() {
     const supabase = await createClient()

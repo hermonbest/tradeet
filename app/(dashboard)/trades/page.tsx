@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import { createClient } from '@/utils/supabase/server'
 import { TradeList } from '@/components/trade-list'
 import { AddTradeDialog } from '@/components/add-trade-dialog'
 import { ExchangeRateInput } from '@/components/exchange-rate-input'
 import { TrendingUp, List } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: "Trade History — Log and Track Your Trades",
+  description: "View and manage your complete trade history. Log forex, crypto, and stock trades with detailed analytics. Track P&L in USD and ETB on TradeET.",
+  alternates: {
+    canonical: "https://tradeet.app/trades",
+  },
+};
 
 export default async function TradesPage() {
     const supabase = await createClient()

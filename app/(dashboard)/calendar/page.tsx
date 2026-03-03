@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import { createClient } from '@/utils/supabase/server'
 import { TradeCalendar } from '@/components/trade-calendar'
+
+export const metadata: Metadata = {
+  title: "Trade Calendar — Visualize Your Trading Performance",
+  description: "View your trading activity on a color-coded calendar. Track winning and losing days, identify patterns, and improve your trading consistency with TradeET's trade calendar.",
+  alternates: {
+    canonical: "https://tradeet.app/calendar",
+  },
+};
 
 export default async function CalendarPage() {
     const supabase = await createClient()

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,6 +18,14 @@ import { getUserAffiliateStats } from '@/app/(dashboard)/actions'
 import { formatPrice } from '@/lib/constants'
 import { AffiliateCodeGenerator } from '@/components/affiliate-code-generator'
 import { CopyButton } from '@/components/copy-button'
+
+export const metadata: Metadata = {
+  title: "Affiliate Program — Earn Rewards Sharing TradeET",
+  description: "Join the TradeET affiliate program. Share your referral code and earn rewards when friends upgrade to Pro. Track your referrals and earnings.",
+  alternates: {
+    canonical: "https://tradeet.app/affiliate",
+  },
+};
 
 export default async function AffiliatePage() {
     const supabase = await createClient()

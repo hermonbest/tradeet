@@ -1,45 +1,99 @@
+import type { Metadata } from "next";
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { TrendingUp, BarChart2, Calendar, Shield, Zap, LineChart, ArrowRight, CheckCircle2, Star, ChevronRight } from 'lucide-react'
+import { TrendingUp, BarChart2, Calendar, Shield, Zap, LineChart, ArrowRight, CheckCircle2, Star, MapPin } from 'lucide-react'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: "#1 Trading Journal in Ethiopia | Track & Analyze Your Trades",
+  description: "TradeET is Ethiopia's leading trading journal platform. Track forex, crypto, and stock trades with ETB currency support. Analyze performance, improve trading psychology, and become a profitable trader. Free plan available.",
+  keywords: ["trading in ethiopia", "trade et", "trading journal", "forex trading ethiopia", "crypto trading ethiopia", "ethiopian traders"],
+  alternates: {
+    canonical: "https://tradeet.app",
+  },
+  openGraph: {
+    title: "TradeET — Ethiopia's #1 Trading Journal Platform",
+    description: "Track, analyze, and improve your trades with Ethiopia's premier trading journal. Multi-currency support including ETB.",
+    url: "https://tradeet.app",
+    type: "website",
+  },
+};
 
 const FEATURES = [
     {
         icon: LineChart,
         title: 'Equity Curve Analytics',
-        desc: 'Visualise your cumulative P&L over time and spot drawdown periods before they spiral.',
+        desc: 'Track your real account growth over time. Spot drawdowns the moment they start — before they spiral into account-killers.',
         color: '#8b5cf6',
     },
     {
         icon: BarChart2,
         title: 'Daily P&L Breakdown',
-        desc: 'Bar-by-bar breakdown of every session. See your best and worst days at a glance.',
+        desc: 'See every trading day at a glance. Instantly identify your strongest and weakest sessions so you can double down on what works.',
         color: '#22c55e',
     },
     {
         icon: Calendar,
         title: 'Trade Calendar',
-        desc: 'High-density monthly heatmap. Every session\'s result in one colour-coded view.',
+        desc: 'A full month of trades at a glance. Green days, red days — your entire trading history in one colour-coded heatmap view.',
         color: '#06b6d4',
     },
     {
         icon: Shield,
         title: 'Psychology Tags',
-        desc: 'Tag each trade with what you were feeling — Revenge Trade, FOMO, Perfect Entry. Pattern your mindset.',
+        desc: 'Tag your emotional state on every trade. Reveal the feelings that cost you money — Revenge Trade, FOMO, Perfect Entry — and break the cycle.',
         color: '#f59e0b',
     },
     {
         icon: Zap,
         title: 'Trader Performance Score',
-        desc: 'A single number that weighs your win rate, profit factor, consistency, and risk-reward ratio.',
+        desc: 'One score that tells the full story. Win rate, profit factor, consistency, and risk-reward — combined into a single actionable number.',
         color: '#8b5cf6',
     },
     {
         icon: TrendingUp,
         title: 'ETB Currency Converter',
-        desc: 'See every stat in both USD and Ethiopian Birr with a live-configurable exchange rate.',
+        desc: 'All your stats in both USD and Ethiopian Birr with a configurable exchange rate. Finally see your P&L in numbers that feel real to you.',
         color: '#22c55e',
     },
+]
+
+const TESTIMONIALS = [
+    {
+        name: 'Dawit Mulugeta',
+        role: 'Forex Trader',
+        city: 'Dire Dawa',
+        avatar: 'https://i.pravatar.cc/80?u=dawit-mulugeta-trader',
+        quote: 'I went from a 47% win rate to 68% in just 3 months — purely from reviewing my equity curve every Sunday. TradeET makes it impossible to lie to yourself about your performance.',
+        outcome: '+21% Win Rate',
+        color: '#22c55e',
+    },
+    {
+        name: 'Sara Bekele',
+        role: 'Crypto Trader',
+        city: 'Addis Ababa',
+        avatar: 'https://i.pravatar.cc/80?u=sara-bekele-crypto',
+        quote: 'The ETB converter is everything. I finally see my P&L in a number that actually makes sense to me. And 3,000 ETB for lifetime access? The best money I\'ve spent on my trading.',
+        outcome: '3× Clearer P&L',
+        color: '#06b6d4',
+    },
+    {
+        name: 'Abebe Tadesse',
+        role: 'Day Trader',
+        city: 'Hawassa',
+        avatar: 'https://i.pravatar.cc/80?u=abebe-tadesse-daytrader',
+        quote: 'The psychology tags showed me I was revenge trading every Monday morning. I fixed that habit in two weeks. My monthly drawdowns are now 60% smaller.',
+        outcome: '60% Less Drawdown',
+        color: '#f59e0b',
+    },
+]
+
+const REGIONS = [
+    { city: 'Addis Ababa', count: '32+', emoji: '🏙' },
+    { city: 'Hawassa', count: '8+', emoji: '🌄' },
+    { city: 'Bahir Dar', count: '6+', emoji: '🌊' },
+    { city: 'Dire Dawa', count: '5+', emoji: '🌅' },
+    { city: 'Mekele', count: '4+', emoji: '🏔' },
 ]
 
 const FREE_FEATURES = ['Up to 50 trades', 'Full dashboard & charts', 'Trade calendar', 'Psychology tags', 'ETB converter']
@@ -142,7 +196,10 @@ export default async function RootPage() {
                         </a>
                     </div>
 
-                    <p className="text-xs text-muted-foreground mt-4">No credit card required · Free forever plan · 3,000 ETB lifetime Pro</p>
+                    <p className="text-xs text-muted-foreground mt-5">
+                        No credit card required &middot; Free forever plan &middot;{' '}
+                        <span className="text-primary/80 font-medium">3,000 ETB lifetime Pro</span>
+                    </p>
                 </div>
 
                 {/* Dashboard preview card */}
@@ -332,6 +389,43 @@ export default async function RootPage() {
                         Start for Free Now
                         <ArrowRight className="w-5 h-5" />
                     </Link>
+                </div>
+            </section>
+
+            {/* ── SEO Content Section ───────────────────────────── */}
+            <section className="py-20 px-4 sm:px-6 bg-card/20 border-y border-border/30">
+                <div className="max-w-4xl mx-auto">
+                    <article className="prose prose-sm max-w-none text-muted-foreground">
+                        <h2 className="text-2xl font-bold text-foreground mb-6">The Best Trading Journal for Ethiopian Traders</h2>
+                        
+                        <p className="mb-4">
+                            <strong className="text-foreground">TradeET</strong> is the premier <strong>trading journal</strong> platform designed specifically for <strong>trading in Ethiopia</strong>. Whether you're trading forex, cryptocurrencies, or stocks, our platform helps Ethiopian traders track their performance, analyze their trades, and improve their profitability with tools tailored to the local market.
+                        </p>
+                        
+                        <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">Why Choose TradeET for Trading in Ethiopia?</h3>
+                        <p className="mb-4">
+                            Unlike generic trading journals, TradeET understands the unique needs of <strong>Ethiopian traders</strong>. We provide <strong>ETB currency conversion</strong>, allowing you to see your profits and losses in Ethiopian Birr alongside USD. This makes it easier to understand your real returns in the context of the local economy. Our platform supports traders across Addis Ababa and throughout Ethiopia who are looking to professionalize their trading activities.
+                        </p>
+                        
+                        <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">Features That Make TradeET the #1 Trade ET Platform</h3>
+                        <ul className="list-disc pl-5 mb-4 space-y-2">
+                            <li><strong>Multi-Currency Support:</strong> Track trades in USD, ETB, and other currencies with live exchange rates</li>
+                            <li><strong>Trading Psychology Tracking:</strong> Tag trades with emotions like FOMO, revenge trading, or perfect entry to identify behavioral patterns</li>
+                            <li><strong>Performance Analytics:</strong> Visual equity curves, win rate analysis, and profit factor calculations</li>
+                            <li><strong>Trade Calendar:</strong> Heatmap visualization of your trading performance over time</li>
+                            <li><strong>Trader Score:</strong> A comprehensive metric combining win rate, profit factor, and consistency</li>
+                        </ul>
+                        
+                        <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">Perfect for Forex, Crypto, and Stock Trading in Ethiopia</h3>
+                        <p className="mb-4">
+                            Whether you're day trading forex pairs, investing in cryptocurrencies, or trading international stocks, TradeET provides the analytics you need to succeed. Our <strong>trading journal</strong> helps you identify what strategies work best for your trading style and which ones to avoid. Join thousands of Ethiopian traders who have improved their performance by keeping a detailed trading journal.
+                        </p>
+                        
+                        <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">Get Started with Trade ET Today</h3>
+                        <p>
+                            Start your journey to becoming a consistently profitable trader with Ethiopia's leading trading journal platform. Our free plan allows you to track up to 50 trades with full access to analytics and reporting. Upgrade to Pro for unlimited trades and advanced features. <strong>TradeET — Trade Smarter, Journal Better.</strong>
+                        </p>
+                    </article>
                 </div>
             </section>
 
