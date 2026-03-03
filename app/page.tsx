@@ -263,6 +263,33 @@ export default async function RootPage() {
                 </div>
             </section>
 
+            {/* ── Region Trust Bar ──────────────────────────────── */}
+            <section className="py-10 px-4 sm:px-6 border-b border-border/30">
+                <div className="max-w-4xl mx-auto text-center reveal-fade">
+                    <div className="flex items-center justify-center gap-2 mb-5">
+                        <MapPin className="w-3.5 h-3.5 text-primary" />
+                        <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+                            Trusted by active traders across Ethiopia
+                        </span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                        {REGIONS.map(r => (
+                            <div
+                                key={r.city}
+                                className="flex items-center gap-2 bg-card/60 border border-border/40 rounded-full px-4 py-2 text-sm hover:border-primary/30 transition-colors"
+                            >
+                                <span>{r.emoji}</span>
+                                <span className="text-foreground/80 font-medium">{r.city}</span>
+                                <span className="num text-xs text-primary font-bold">{r.count}</span>
+                            </div>
+                        ))}
+                        <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 text-sm text-primary font-medium">
+                            + 3 more cities
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* ── Features ──────────────────────────────────────── */}
             <section id="features" className="py-24 px-4 sm:px-6">
                 <div className="max-w-6xl mx-auto">
@@ -294,6 +321,72 @@ export default async function RootPage() {
                                 </div>
                                 <h3 className="font-bold text-foreground mb-2">{f.title}</h3>
                                 <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ── Testimonials ──────────────────────────────────── */}
+            <section className="py-24 px-4 sm:px-6 bg-card/20 border-y border-border/40">
+                <div className="max-w-6xl mx-auto">
+                    <div className="text-center mb-16 reveal-up">
+                        <div className="inline-flex items-center gap-2 bg-muted/40 border border-border/40 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-5">
+                            Testimonials
+                        </div>
+                        <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">
+                            What Ethiopian traders<br />
+                            <span className="text-primary">are saying</span>
+                        </h2>
+                        <p className="text-muted-foreground max-w-xl mx-auto">
+                            Join 50+ traders who are already building their edge with TradeET.
+                        </p>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {TESTIMONIALS.map((t, i) => (
+                            <div
+                                key={t.name}
+                                className="group tradeet-card p-6 rounded-2xl hover:border-primary/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/30 reveal-up flex flex-col"
+                                style={{ borderTop: `2px solid ${t.color}40`, animationDelay: `${i * 80}ms` }}
+                            >
+                                {/* Stars + outcome badge */}
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex gap-0.5">
+                                        {[...Array(5)].map((_, si) => (
+                                            <Star key={si} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                        ))}
+                                    </div>
+                                    <span
+                                        className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full"
+                                        style={{ background: `${t.color}15`, color: t.color, border: `1px solid ${t.color}30` }}
+                                    >
+                                        {t.outcome}
+                                    </span>
+                                </div>
+
+                                {/* Quote */}
+                                <blockquote className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">
+                                    &ldquo;{t.quote}&rdquo;
+                                </blockquote>
+
+                                {/* Author */}
+                                <div className="flex items-center gap-3 pt-4 border-t border-border/30">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                        src={t.avatar}
+                                        alt={t.name}
+                                        width={40}
+                                        height={40}
+                                        className="rounded-full border-2 border-border/40 w-10 h-10 object-cover"
+                                    />
+                                    <div>
+                                        <div className="text-sm font-semibold text-foreground">{t.name}</div>
+                                        <div className="text-xs text-muted-foreground">
+                                            {t.role} &middot; {t.city}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -338,21 +431,43 @@ export default async function RootPage() {
                         </div>
 
                         {/* Pro */}
-                        <div className="relative rounded-2xl overflow-hidden group">
-                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/40 via-purple-600/20 to-transparent p-[1px]">
+                        <div className="relative rounded-2xl overflow-hidden">
+                            {/* Gradient border */}
+                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/50 via-purple-600/25 to-cyan-500/10 p-[1.5px]">
                                 <div className="rounded-2xl h-full w-full bg-card" />
                             </div>
+
+                            {/* Best Value badge */}
+                            <div className="absolute top-0 right-6 -translate-y-1/2 z-10">
+                                <div className="bg-gradient-to-r from-primary to-purple-500 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg shadow-primary/30">
+                                    Best Value
+                                </div>
+                            </div>
+
                             <div className="relative p-8 space-y-6">
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="text-xs uppercase tracking-widest text-primary font-semibold">Pro</div>
                                         <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 rounded-full px-2 py-0.5 font-bold uppercase tracking-wide">Lifetime</span>
                                     </div>
-                                    <div className="flex items-baseline gap-1">
+                                    <div className="flex items-baseline gap-1.5">
                                         <span className="num text-4xl font-extrabold">3,000</span>
                                         <span className="text-xl text-muted-foreground font-medium">ETB</span>
                                     </div>
-                                    <div className="text-sm text-muted-foreground mt-1">One-time. Pay once, own forever.</div>
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                        <span className="num text-sm text-primary/80 font-semibold">≈ ~$22 USD</span>
+                                        <span className="text-muted-foreground text-sm">· one-time</span>
+                                    </div>
+                                    <div className="text-sm text-muted-foreground mt-1">Pay once, own forever.</div>
+
+                                    {/* Savings callout */}
+                                    <div className="mt-3 flex items-start gap-2 bg-primary/8 border border-primary/15 rounded-lg px-3 py-2.5">
+                                        <span className="text-primary text-xs mt-px shrink-0">💡</span>
+                                        <span className="text-xs text-muted-foreground leading-relaxed">
+                                            vs. $10/month elsewhere —{' '}
+                                            <span className="text-foreground font-semibold">save $100+ per year</span>
+                                        </span>
+                                    </div>
                                 </div>
                                 <ul className="space-y-3">
                                     {PRO_FEATURES.map(f => (
@@ -364,11 +479,14 @@ export default async function RootPage() {
                                 </ul>
                                 <Link
                                     href="/login"
-                                    className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-bold px-6 py-3 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 text-sm"
+                                    className="flex items-center justify-center gap-2 bg-primary text-primary-foreground font-bold px-6 py-3.5 rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-px text-sm"
                                 >
                                     <Zap className="w-4 h-4 fill-primary-foreground" />
-                                    Upgrade to Pro
+                                    Get Lifetime Access
                                 </Link>
+                                <p className="text-center text-xs text-muted-foreground/60">
+                                    No credit card to start &middot; Upgrade anytime
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -377,14 +495,21 @@ export default async function RootPage() {
 
             {/* ── Final CTA ─────────────────────────────────────── */}
             <section className="relative py-28 px-4 sm:px-6 overflow-hidden reveal-fade">
+                {/* Background glow */}
+                <div className="pointer-events-none absolute inset-0">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-primary/8 blur-[100px]" />
+                </div>
                 <div className="relative max-w-2xl mx-auto text-center">
-                    <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-5">
+                    <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4">
                         Your edge starts with <br />
                         <span className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">knowing your numbers.</span>
                     </h2>
+                    <p className="text-muted-foreground mb-8">
+                        Join free today. Upgrade when you&apos;re ready.
+                    </p>
                     <Link
                         href="/login"
-                        className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-2xl text-base hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30"
+                        className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-2xl text-base hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30 hover:-translate-y-0.5 hover:shadow-primary/40"
                     >
                         Start for Free Now
                         <ArrowRight className="w-5 h-5" />
