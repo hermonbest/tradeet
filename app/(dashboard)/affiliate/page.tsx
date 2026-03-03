@@ -47,7 +47,9 @@ export default async function AffiliatePage() {
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Affiliate Dashboard</h1>
                     <p className="text-muted-foreground mt-1">
-                        Earn commissions by referring new users to TradeET Pro
+                        {stats.isInfluencer
+                            ? "Share TradeET Pro with your audience and give them a special discount"
+                            : "Earn commissions by referring new users to TradeET Pro"}
                     </p>
                 </div>
                 {stats.isInfluencer && (
@@ -68,11 +70,13 @@ export default async function AffiliatePage() {
                         <div>
                             <h3 className="text-xl font-semibold">Start Earning Today</h3>
                             <p className="text-muted-foreground max-w-md mx-auto mt-2">
-                                Generate your unique affiliate code and share it with friends. 
-                                Earn 20% commission when they upgrade to TradeET Pro!
+                                Generate your unique affiliate code and share it with friends.
+                                {stats.isInfluencer
+                                    ? "Generate your unique creator code and share it with your audience. Give them 20% off when they upgrade to TradeET Pro!"
+                                    : "Earn 20% commission when they upgrade to TradeET Pro!"}
                             </p>
                         </div>
-                        <AffiliateCodeGenerator />
+                        <AffiliateCodeGenerator isInfluencer={stats.isInfluencer} />
                     </CardContent>
                 </Card>
             )}
@@ -93,12 +97,14 @@ export default async function AffiliatePage() {
                                         <CopyButton text={stats.affiliateCode!} />
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-sm text-muted-foreground">Commission Rate</p>
-                                    <p className="text-2xl font-bold">20%</p>
-                                </div>
+                                {!stats.isInfluencer && (
+                                    <div className="text-right">
+                                        <p className="text-sm text-muted-foreground">Commission Rate</p>
+                                        <p className="text-2xl font-bold">20%</p>
+                                    </div>
+                                )}
                             </div>
-                            
+
                             {stats.isInfluencer && (
                                 <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                                     <p className="text-sm text-yellow-700 dark:text-yellow-400">
@@ -111,93 +117,99 @@ export default async function AffiliatePage() {
                     </Card>
 
                     {/* Stats Cards */}
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className={`grid ${stats.isInfluencer ? 'sm:grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-4'} gap-4`}>
                         <StatCard
                             icon={<Users className="w-5 h-5" />}
                             label="Total Referrals"
                             value={stats.totalReferrals.toString()}
                             color="blue"
                         />
-                        <StatCard
-                            icon={<DollarSign className="w-5 h-5" />}
-                            label="Total Earnings"
-                            value={formatPrice(stats.totalEarnings)}
-                            color="green"
-                        />
-                        <StatCard
-                            icon={<Wallet className="w-5 h-5" />}
-                            label="Pending Earnings"
-                            value={formatPrice(stats.pendingEarnings)}
-                            color="yellow"
-                        />
-                        <StatCard
-                            icon={<CheckCircle2 className="w-5 h-5" />}
-                            label="Paid Earnings"
-                            value={formatPrice(stats.totalPaidEarnings)}
-                            color="purple"
-                        />
+                        {!stats.isInfluencer && (
+                            <>
+                                <StatCard
+                                    icon={<DollarSign className="w-5 h-5" />}
+                                    label="Total Earnings"
+                                    value={formatPrice(stats.totalEarnings)}
+                                    color="green"
+                                />
+                                <StatCard
+                                    icon={<Wallet className="w-5 h-5" />}
+                                    label="Pending Earnings"
+                                    value={formatPrice(stats.pendingEarnings)}
+                                    color="yellow"
+                                />
+                                <StatCard
+                                    icon={<CheckCircle2 className="w-5 h-5" />}
+                                    label="Paid Earnings"
+                                    value={formatPrice(stats.totalPaidEarnings)}
+                                    color="purple"
+                                />
+                            </>
+                        )}
                     </div>
 
                     {/* Commissions Table */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5" />
-                                Commission History
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {(stats.commissions || []).length === 0 ? (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <Award className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                                    <p>No commissions yet. Start sharing your code!</p>
-                                </div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="border-b border-border">
-                                                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
-                                                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Referred User</th>
-                                                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
-                                                <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {(stats.commissions || []).map((commission) => (
-                                                <tr key={commission.id} className="border-b border-border/50">
-                                                    <td className="py-3 px-4 text-sm">
-                                                        {new Date(commission.created_at).toLocaleDateString()}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-sm">
-                                                        {commission.referred_user?.email || 'Unknown'}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-sm text-right font-medium">
-                                                        {formatPrice(commission.amount_due)}
-                                                    </td>
-                                                    <td className="py-3 px-4 text-center">
-                                                        <Badge 
-                                                            variant={commission.status === 'paid' ? 'default' : 'secondary'}
-                                                            className={commission.status === 'paid' 
-                                                                ? 'bg-[#22c55e]/20 text-[#22c55e] hover:bg-[#22c55e]/30' 
-                                                                : 'bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30'
-                                                            }
-                                                        >
-                                                            {commission.status === 'paid' ? (
-                                                                <><CheckCircle2 className="w-3 h-3 mr-1" /> Paid</>
-                                                            ) : (
-                                                                <><Clock className="w-3 h-3 mr-1" /> Pending</>
-                                                            )}
-                                                        </Badge>
-                                                    </td>
+                    {!stats.isInfluencer && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <TrendingUp className="w-5 h-5" />
+                                    Commission History
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {(stats.commissions || []).length === 0 ? (
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        <Award className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                                        <p>No commissions yet. Start sharing your code!</p>
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="border-b border-border">
+                                                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Date</th>
+                                                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Referred User</th>
+                                                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Amount</th>
+                                                    <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                                            </thead>
+                                            <tbody>
+                                                {(stats.commissions || []).map((commission) => (
+                                                    <tr key={commission.id} className="border-b border-border/50">
+                                                        <td className="py-3 px-4 text-sm">
+                                                            {new Date(commission.created_at).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="py-3 px-4 text-sm">
+                                                            {commission.referred_user?.email || 'Unknown'}
+                                                        </td>
+                                                        <td className="py-3 px-4 text-sm text-right font-medium">
+                                                            {formatPrice(commission.amount_due)}
+                                                        </td>
+                                                        <td className="py-3 px-4 text-center">
+                                                            <Badge
+                                                                variant={commission.status === 'paid' ? 'default' : 'secondary'}
+                                                                className={commission.status === 'paid'
+                                                                    ? 'bg-[#22c55e]/20 text-[#22c55e] hover:bg-[#22c55e]/30'
+                                                                    : 'bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30'
+                                                                }
+                                                            >
+                                                                {commission.status === 'paid' ? (
+                                                                    <><CheckCircle2 className="w-3 h-3 mr-1" /> Paid</>
+                                                                ) : (
+                                                                    <><Clock className="w-3 h-3 mr-1" /> Pending</>
+                                                                )}
+                                                            </Badge>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* How It Works */}
                     <Card>
@@ -209,17 +221,23 @@ export default async function AffiliatePage() {
                                 <StepCard
                                     number={1}
                                     title="Share Your Code"
-                                    description="Share your unique affiliate code with friends and followers"
+                                    description={stats.isInfluencer
+                                        ? "Share your unique creator code with your friends and followers"
+                                        : "Share your unique affiliate code with friends and followers"}
                                 />
                                 <StepCard
                                     number={2}
                                     title="They Upgrade"
-                                    description="When someone uses your code to upgrade to Pro, you earn commission"
+                                    description={stats.isInfluencer
+                                        ? "When someone uses your code to upgrade to Pro, they get a 20% discount"
+                                        : "When someone uses your code to upgrade to Pro, you earn commission"}
                                 />
                                 <StepCard
                                     number={3}
-                                    title="Get Paid"
-                                    description="Earn 20% of what they pay. Commissions are paid out monthly"
+                                    title={stats.isInfluencer ? "Build Influence" : "Get Paid"}
+                                    description={stats.isInfluencer
+                                        ? "Grow your community by sharing valuable content and helping others save"
+                                        : "Earn 20% of what they pay. Commissions are paid out monthly"}
                                 />
                             </div>
                         </CardContent>
@@ -231,12 +249,12 @@ export default async function AffiliatePage() {
 }
 
 // Stat Card Component
-function StatCard({ 
-    icon, 
-    label, 
-    value, 
-    color 
-}: { 
+function StatCard({
+    icon,
+    label,
+    value,
+    color
+}: {
     icon: React.ReactNode
     label: string
     value: string
@@ -267,11 +285,11 @@ function StatCard({
 }
 
 // Step Card Component
-function StepCard({ 
-    number, 
-    title, 
-    description 
-}: { 
+function StepCard({
+    number,
+    title,
+    description
+}: {
     number: number
     title: string
     description: string

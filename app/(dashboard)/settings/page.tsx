@@ -107,21 +107,23 @@ export default async function SettingsPage() {
                                 </div>
 
                                 {/* Stats */}
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className={`grid ${('isInfluencer' in affiliateStats && affiliateStats.isInfluencer) ? 'grid-cols-2' : 'grid-cols-3'} gap-4`}>
                                     <div className="p-3 rounded-lg bg-muted/30 text-center">
                                         <Users className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
                                         <p className="text-lg font-bold">{affiliateStats.totalReferrals}</p>
                                         <p className="text-xs text-muted-foreground">Referrals</p>
                                     </div>
-                                    <div className="p-3 rounded-lg bg-muted/30 text-center">
-                                        <DollarSign className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                                        <p className="text-lg font-bold">{formatPrice(affiliateStats.totalEarnings)}</p>
-                                        <p className="text-xs text-muted-foreground">Earnings</p>
-                                    </div>
+                                    {!('isInfluencer' in affiliateStats && affiliateStats.isInfluencer) && (
+                                        <div className="p-3 rounded-lg bg-muted/30 text-center">
+                                            <DollarSign className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+                                            <p className="text-lg font-bold">{formatPrice(affiliateStats.totalEarnings)}</p>
+                                            <p className="text-xs text-muted-foreground">Earnings</p>
+                                        </div>
+                                    )}
                                     <div className="p-3 rounded-lg bg-muted/30 text-center">
                                         <Award className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
                                         <p className="text-lg font-bold">20%</p>
-                                        <p className="text-xs text-muted-foreground">Commission</p>
+                                        <p className="text-xs text-muted-foreground">{('isInfluencer' in affiliateStats && affiliateStats.isInfluencer) ? 'Discount' : 'Commission'}</p>
                                     </div>
                                 </div>
 
@@ -146,7 +148,7 @@ export default async function SettingsPage() {
                                 <p className="text-sm text-muted-foreground">
                                     Generate your unique affiliate code and start earning 20% commission on every referral who upgrades to Pro.
                                 </p>
-                                <AffiliateCodeGenerator />
+                                <AffiliateCodeGenerator isInfluencer={'isInfluencer' in affiliateStats && !!affiliateStats.isInfluencer} />
                             </>
                         )}
                     </CardContent>

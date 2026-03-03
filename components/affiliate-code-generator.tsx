@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { generateUserAffiliateCode } from '@/app/(dashboard)/actions'
 import { Loader2, Sparkles, CheckCircle2, Copy } from 'lucide-react'
 
-export function AffiliateCodeGenerator() {
+export function AffiliateCodeGenerator({ isInfluencer = false }: { isInfluencer?: boolean }) {
     const [customCode, setCustomCode] = useState('')
     const [loading, setLoading] = useState(false)
     const [result, setResult] = useState<{
@@ -29,7 +29,7 @@ export function AffiliateCodeGenerator() {
 
     if (result?.success && result.code) {
         const shareUrl = `${window.location.origin}/upgrade?ref=${result.code}`
-        
+
         return (
             <div className="space-y-4">
                 <div className="p-4 bg-[#22c55e]/10 border border-[#22c55e]/30 rounded-lg">
@@ -39,26 +39,26 @@ export function AffiliateCodeGenerator() {
                     </div>
                     <div className="flex items-center gap-2">
                         <code className="text-2xl font-bold tracking-wider">{result.code}</code>
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => copyToClipboard(result.code!)}
                         >
                             <Copy className="w-4 h-4" />
                         </Button>
                     </div>
                 </div>
-                
+
                 <div className="space-y-2">
                     <Label className="text-sm">Share Link</Label>
                     <div className="flex gap-2">
-                        <Input 
-                            value={shareUrl} 
-                            readOnly 
+                        <Input
+                            value={shareUrl}
+                            readOnly
                             className="bg-muted"
                         />
-                        <Button 
-                            variant="secondary" 
+                        <Button
+                            variant="secondary"
                             onClick={() => copyToClipboard(shareUrl)}
                         >
                             Copy
@@ -82,8 +82,8 @@ export function AffiliateCodeGenerator() {
                     )}
                 </div>
             )}
-            
-            <Button 
+
+            <Button
                 onClick={handleGenerate}
                 disabled={loading}
                 className="w-full"
@@ -94,11 +94,13 @@ export function AffiliateCodeGenerator() {
                 ) : (
                     <Sparkles className="w-4 h-4 mr-2" />
                 )}
-                Generate My Affiliate Code
+                {isInfluencer ? 'Generate My Creator Code' : 'Generate My Affiliate Code'}
             </Button>
-            
-            <p className="text-xs text-muted-foreground">
-                Click above to generate your unique referral code and start earning commissions!
+
+            <p className="text-xs text-muted-foreground text-center">
+                {isInfluencer
+                    ? 'Click above to generate your unique creator code and give your audience a 20% discount!'
+                    : 'Click above to generate your unique referral code and start earning commissions!'}
             </p>
         </div>
     )

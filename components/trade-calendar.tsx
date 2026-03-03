@@ -126,7 +126,7 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
                         })
 
                         return (
-                            <div key={weekIdx} className="grid grid-cols-7 gap-1 min-h-[70px] md:min-h-[110px]">
+                            <div key={weekIdx} className="grid grid-cols-7 gap-1 min-h-[80px] md:min-h-[110px]">
                                 {week.map((day, dayIdx) => {
                                     const dateStr = format(day, 'yyyy-MM-dd')
                                     const stats = dailyPnL[dateStr]
@@ -153,7 +153,7 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
 
                                             {!isOutside && stats ? (
                                                 <div className="flex flex-col items-center justify-center flex-1 min-h-0 gap-0.5">
-                                                    <div className={`text-[9px] md:text-sm font-bold num flex items-center gap-0.5 ${stats.amount >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                                                    <div className={`text-[8px] md:text-sm font-bold num flex items-center gap-0.5 ${stats.amount >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
                                                         <span className="hidden md:inline">{stats.amount >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}</span>
                                                         <span className="truncate">
                                                             {stats.amount >= 0 ? '+' : '-'}
@@ -194,33 +194,25 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
                                                     </div>
                                                     {/* Mobile: trade summary */}
                                                     <div className="md:hidden w-full mt-0.5">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                const dayTrades = trades.filter(t => t.trade_date && t.trade_date.split('T')[0] === dateStr)
-                                                                if (dayTrades.length === 1) {
-                                                                    setSelectedTrade(dayTrades[0])
-                                                                }
-                                                            }}
-                                                            className="w-full"
-                                                        >
-                                                            {stats.count === 1 ? (
-                                                                <div className={`flex items-center justify-center gap-0.5 px-1 py-0.5 rounded text-[8px] font-medium leading-tight ${trades.find(t => t.trade_date?.split('T')[0] === dateStr)?.profit_usd >= 0
-                                                                    ? 'bg-green-500/10 text-green-700 border border-green-500/20'
-                                                                    : 'bg-red-500/10 text-red-700 border border-red-500/20'
-                                                                    }`}>
-                                                                    <span className="truncate">
-                                                                        {trades.find(t => t.trade_date?.split('T')[0] === dateStr)?.pair}
-                                                                    </span>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center justify-center">
-                                                                    <span className="text-[9px] font-medium text-muted-foreground">
-                                                                        {stats.count} trades
-                                                                    </span>
+                                                        <div className="flex flex-col gap-0.5">
+                                                            {trades
+                                                                .filter(t => t.trade_date && t.trade_date.split('T')[0] === dateStr)
+                                                                .slice(0, 1)
+                                                                .map(trade => (
+                                                                    <div key={trade.id} className={`flex items-center justify-center px-1 py-0.5 rounded text-[7px] font-medium leading-tight truncate ${trade.profit_usd >= 0
+                                                                        ? 'bg-green-500/10 text-green-700 border border-green-500/20'
+                                                                        : 'bg-red-500/10 text-red-700 border border-red-500/20'
+                                                                        }`}>
+                                                                        {trade.pair}
+                                                                    </div>
+                                                                ))
+                                                            }
+                                                            {stats.count > 1 && (
+                                                                <div className="text-[6px] text-muted-foreground text-center font-medium">
+                                                                    +{stats.count - 1} more
                                                                 </div>
                                                             )}
-                                                        </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ) : !isOutside && (
