@@ -213,14 +213,23 @@ export async function approvePayment(paymentId: string, userId: string, actualAm
 
     // Record commission if referral code was used
     if (payment?.referral_code) {
+        const normalizedCode = payment.referral_code.toUpperCase().trim()
+        console.log(`[COMMISSION] Referral code on payment: "${normalizedCode}", looking up affiliate...`)
+
         // Find the affiliate
-        const { data: affiliate } = await supabase
+        const { data: affiliate, error: affiliateLookupError } = await supabase
             .from('profiles')
-            .select('id')
-            .eq('affiliate_code', payment.referral_code.toUpperCase())
+            .select('id, email')
+            .eq('affiliate_code', normalizedCode)
             .single()
 
-        if (affiliate && affiliate.id !== userId) {
+        if (affiliateLookupError || !affiliate) {
+            console.error('[COMMISSION] Affiliate not found for code:', normalizedCode, affiliateLookupError)
+        } else if (affiliate.id === userId) {
+            console.warn('[COMMISSION] Skipping: affiliate is the same as the paying user (self-referral). Affiliate ID:', affiliate.id)
+        } else {
+            console.log(`[COMMISSION] Affiliate found: ${affiliate.email} (${affiliate.id})`)
+
             // Check if commission already exists
             const { data: existingCommission } = await supabase
                 .from('commissions')
@@ -229,8 +238,11 @@ export async function approvePayment(paymentId: string, userId: string, actualAm
                 .eq('referred_user_id', userId)
                 .single()
 
-            if (!existingCommission) {
+            if (existingCommission) {
+                console.warn('[COMMISSION] Commission already exists, skipping duplicate.')
+            } else {
                 const commissionAmount = calculateCommission(finalAmount)
+                console.log(`[COMMISSION] Creating commission: ${commissionAmount} ETB for affiliate ${affiliate.email}`)
 
                 // Create commission record
                 const { error: commissionError } = await supabase
@@ -244,10 +256,17 @@ export async function approvePayment(paymentId: string, userId: string, actualAm
                     })
 
                 if (commissionError) {
-                    console.error('Error creating commission:', commissionError)
+                    console.error('[COMMISSION] Failed to insert commission record:', commissionError)
+                    // Return partial success with a warning so it's visible in admin
+                    revalidatePath('/admin')
+                    return { success: true, warning: `Commission could not be recorded: ${commissionError.message}` }
+                } else {
+                    console.log('[COMMISSION] Commission created successfully!')
                 }
             }
         }
+    } else {
+        console.log('[COMMISSION] No referral code on this payment. No commission to record.')
     }
 
     revalidatePath('/admin')

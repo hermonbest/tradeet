@@ -28,10 +28,11 @@ const PRO_FEATURES = [
 ]
 
 interface UpgradePageProps {
-    searchParams: { ref?: string }
+    searchParams: Promise<{ ref?: string }>
 }
 
 export default async function UpgradePage({ searchParams }: UpgradePageProps) {
+    const resolvedParams = await searchParams
     const supabase = await createClient()
     const { data: userData } = await supabase.auth.getUser()
     const { data: profile } = await supabase.from('profiles').select('role, referred_by_id, is_influencer').eq('id', userData?.user?.id).single()
@@ -39,7 +40,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
     const isPro = profile?.role === 'pro' || profile?.role === 'admin'
 
     // Check for referral code from URL or user's profile
-    const urlReferralCode = searchParams.ref
+    const urlReferralCode = resolvedParams.ref
     let referralCode = urlReferralCode
     let isInfluencer = false
     let finalPrice: number = AFFILIATE_CONSTANTS.BASE_PRICE
@@ -217,7 +218,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
                         <div className="space-y-3 text-sm">
                             <div className="flex items-start gap-3">
                                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs font-medium">1</div>
-                                <p className="text-muted-foreground">Transfer <strong className="text-foreground">{finalPrice.toLocaleString()} ETB</strong> via Telebirr/CBE to <strong className="text-foreground">0988509039</strong></p>
+                                <p className="text-muted-foreground">Transfer <strong className="text-foreground">{finalPrice.toLocaleString()} ETB</strong> via Telebirr/CBE to <strong className="text-foreground">0988509039/1000646330231</strong></p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs font-medium">2</div>
