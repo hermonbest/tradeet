@@ -93,7 +93,7 @@ export function LoginForm({ message }: { message?: string }) {
             </div>
 
             {message && (
-                <div className="error-banner">
+                <div className={message.toLowerCase().includes('check email') || message.toLowerCase().includes('applied') ? 'success-banner' : 'error-banner'}>
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>{message}</span>
                 </div>

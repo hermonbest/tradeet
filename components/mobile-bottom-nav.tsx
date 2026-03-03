@@ -22,7 +22,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
 
   return (
     <nav className={cn(
-      "fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-zinc-800/80 px-6 py-4 pb-8 safe-area-bottom",
+      "fixed bottom-0 left-0 right-0 z-50 glass-effect border-t border-zinc-800/80 px-6 py-4 pb-8 safe-area-bottom md:hidden",
       className
     )}>
       <div className="flex justify-between items-center max-w-md mx-auto">
@@ -45,7 +45,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
           )
         })}
       </div>
-      
+
       {/* iOS home indicator line */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-zinc-700 rounded-full" />
     </nav>

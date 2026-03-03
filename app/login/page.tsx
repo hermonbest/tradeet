@@ -45,7 +45,7 @@ export default async function LoginPage({
                     <LoginForm message={resolvedParams?.message} />
 
                     <p className="text-center text-[10px] text-muted-foreground mt-6 uppercase tracking-widest">
-                        New here? Use "Create Account" above.
+                        New here? Use "Create Account" below.
                     </p>
                 </div>
             </div>

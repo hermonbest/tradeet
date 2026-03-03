@@ -10,7 +10,7 @@ interface FloatingActionButtonProps {
 
 export function FloatingActionButton({ className }: FloatingActionButtonProps) {
   return (
-    <div className={cn("fixed bottom-24 right-6 z-40", className)}>
+    <div className={cn("fixed bottom-24 right-6 z-40 md:hidden", className)}>
       <AddTradeDialog />
     </div>
   )
