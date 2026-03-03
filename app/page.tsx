@@ -142,7 +142,7 @@ export default async function RootPage() {
                         </a>
                     </div>
 
-                    <p className="text-xs text-muted-foreground mt-4">No credit card required · Free forever plan · 1,000 ETB lifetime Pro</p>
+                    <p className="text-xs text-muted-foreground mt-4">No credit card required · Free forever plan · 3,000 ETB lifetime Pro</p>
                 </div>
 
                 {/* Dashboard preview card */}
@@ -292,7 +292,7 @@ export default async function RootPage() {
                                         <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 rounded-full px-2 py-0.5 font-bold uppercase tracking-wide">Lifetime</span>
                                     </div>
                                     <div className="flex items-baseline gap-1">
-                                        <span className="num text-4xl font-extrabold">1,000</span>
+                                        <span className="num text-4xl font-extrabold">3,000</span>
                                         <span className="text-xl text-muted-foreground font-medium">ETB</span>
                                     </div>
                                     <div className="text-sm text-muted-foreground mt-1">One-time. Pay once, own forever.</div>
