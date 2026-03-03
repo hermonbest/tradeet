@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { generateAffiliateCode } from '@/lib/affiliate'
@@ -216,8 +217,9 @@ export async function approvePayment(paymentId: string, userId: string, actualAm
         const normalizedCode = payment.referral_code.toUpperCase().trim()
         console.log(`[COMMISSION] Referral code on payment: "${normalizedCode}", looking up affiliate...`)
 
-        // Find the affiliate
-        const { data: affiliate, error: affiliateLookupError } = await supabase
+        // Use admin client to bypass RLS — we need to read another user's profile row
+        const adminClient = createAdminClient()
+        const { data: affiliate, error: affiliateLookupError } = await adminClient
             .from('profiles')
             .select('id, email')
             .eq('affiliate_code', normalizedCode)
@@ -403,8 +405,9 @@ export async function applyReferralCode(code: string) {
         return { error: 'Not authenticated' }
     }
 
-    // Validate code
-    const { data: affiliate, error: affiliateError } = await supabase
+    // Validate code — use admin client to bypass RLS on profiles table
+    const adminClient = createAdminClient()
+    const { data: affiliate, error: affiliateError } = await adminClient
         .from('profiles')
         .select('id, is_influencer, affiliate_code')
         .eq('affiliate_code', code.toUpperCase().trim())

@@ -96,9 +96,18 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
             <div className="w-full">
                 {/* Weekday Headers */}
                 <div className="grid grid-cols-7 mb-2 border-b border-border/30 pb-2">
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                        <div key={day} className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                            {day}
+                    {[
+                        { short: 'S', long: 'Sun' },
+                        { short: 'M', long: 'Mon' },
+                        { short: 'T', long: 'Tue' },
+                        { short: 'W', long: 'Wed' },
+                        { short: 'T', long: 'Thu' },
+                        { short: 'F', long: 'Fri' },
+                        { short: 'S', long: 'Sat' },
+                    ].map((day, i) => (
+                        <div key={i} className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            <span className="md:hidden">{day.short}</span>
+                            <span className="hidden md:inline">{day.long}</span>
                         </div>
                     ))}
                 </div>
@@ -135,7 +144,7 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
                                     }
 
                                     return (
-                                        <div key={dayIdx} className={cellClass} title={dateStr}>
+                                        <div key={dayIdx} className={`${cellClass} overflow-hidden`} title={dateStr}>
                                             <div className="flex justify-between items-start">
                                                 <span className={`text-[9px] md:text-[11px] font-semibold ${isOutside ? 'text-muted-foreground/30' : 'text-muted-foreground'}`}>
                                                     {format(day, 'd')}
@@ -144,9 +153,13 @@ export function TradeCalendar({ trades }: { trades: any[] }) {
 
                                             {!isOutside && stats ? (
                                                 <div className="flex flex-col items-center justify-center flex-1 min-h-0 gap-0.5">
-                                                    <div className={`text-[10px] md:text-sm font-bold num flex items-center gap-1 ${stats.amount >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
-                                                        {stats.amount >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                                        {stats.amount >= 0 ? '+' : '-'}${Math.abs(stats.amount).toFixed(2)}
+                                                    <div className={`text-[9px] md:text-sm font-bold num flex items-center gap-0.5 ${stats.amount >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]'}`}>
+                                                        <span className="hidden md:inline">{stats.amount >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}</span>
+                                                        <span className="truncate">
+                                                            {stats.amount >= 0 ? '+' : '-'}
+                                                            <span className="md:hidden">${Math.abs(stats.amount).toFixed(0)}</span>
+                                                            <span className="hidden md:inline">${Math.abs(stats.amount).toFixed(2)}</span>
+                                                        </span>
                                                     </div>
                                                     {/* Desktop: clickable trade pills with pair and result */}
                                                     <div className="hidden md:flex flex-col gap-0.5 w-full">

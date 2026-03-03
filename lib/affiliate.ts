@@ -66,8 +66,6 @@ export function generateAffiliateCode(name?: string): string {
 
 // Validate a referral code
 export async function validateReferralCode(code: string): Promise<ReferralValidationResult> {
-    const supabase = await createClient();
-
     if (!code || code.trim().length < 3) {
         return {
             valid: false,
@@ -78,13 +76,24 @@ export async function validateReferralCode(code: string): Promise<ReferralValida
         };
     }
 
-    const { data: affiliate, error } = await supabase
+    // Use admin client to bypass RLS — profiles are only visible to their own owner by default
+    const { createAdminClient } = await import('@/utils/supabase/admin');
+    const adminClient = createAdminClient();
+
+    console.log(`[VALIDATE] Validating code: "${code.toUpperCase().trim()}"`);
+
+    const { data: affiliate, error } = await adminClient
         .from('profiles')
-        .select('id, email, name, affiliate_code, is_influencer, referred_by_id, role')
+        .select('id, email, affiliate_code, is_influencer, referred_by_id, role')
         .eq('affiliate_code', code.toUpperCase().trim())
         .single();
 
-    if (error || !affiliate) {
+    if (error) {
+        console.error(`[VALIDATE] Error looking up code "${code}":`, error.message);
+    }
+
+    if (!affiliate) {
+        console.log(`[VALIDATE] No affiliate found for code: "${code}"`);
         return {
             valid: false,
             isInfluencer: false,

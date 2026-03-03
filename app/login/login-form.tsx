@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,12 @@ export function LoginForm({ message }: { message?: string }) {
     const [isLoggingIn, setIsLoggingIn] = useState(false)
     const [isSigningUp, setIsSigningUp] = useState(false)
 
+    // Reset loading states when message arrives (after redirect)
+    useEffect(() => {
+        setIsLoggingIn(false)
+        setIsSigningUp(false)
+    }, [message])
+
     function validate() {
         const errs: { email?: string; password?: string } = {}
         if (!email || !email.includes('@')) errs.email = 'Enter a valid email address.'
@@ -26,22 +32,28 @@ export function LoginForm({ message }: { message?: string }) {
         e.preventDefault()
         if (!validate()) return
         setIsLoggingIn(true)
-        const fd = new FormData()
-        fd.append('email', email)
-        fd.append('password', password)
-        await login(fd)
-        setIsLoggingIn(false)
+        try {
+            const fd = new FormData()
+            fd.append('email', email)
+            fd.append('password', password)
+            await login(fd)
+        } finally {
+            setIsLoggingIn(false)
+        }
     }
 
     async function handleSignup(e: React.MouseEvent) {
         e.preventDefault()
         if (!validate()) return
         setIsSigningUp(true)
-        const fd = new FormData()
-        fd.append('email', email)
-        fd.append('password', password)
-        await signup(fd)
-        setIsSigningUp(false)
+        try {
+            const fd = new FormData()
+            fd.append('email', email)
+            fd.append('password', password)
+            await signup(fd)
+        } finally {
+            setIsSigningUp(false)
+        }
     }
 
     const isLoading = isLoggingIn || isSigningUp
