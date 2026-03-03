@@ -221,7 +221,7 @@ export async function approvePayment(paymentId: string, userId: string, actualAm
         const adminClient = createAdminClient()
         const { data: affiliate, error: affiliateLookupError } = await adminClient
             .from('profiles')
-            .select('id, email')
+            .select('id, email, is_influencer')
             .eq('affiliate_code', normalizedCode)
             .single()
 
@@ -229,6 +229,8 @@ export async function approvePayment(paymentId: string, userId: string, actualAm
             console.error('[COMMISSION] Affiliate not found for code:', normalizedCode, affiliateLookupError)
         } else if (affiliate.id === userId) {
             console.warn('[COMMISSION] Skipping: affiliate is the same as the paying user (self-referral). Affiliate ID:', affiliate.id)
+        } else if (affiliate.is_influencer) {
+            console.log(`[COMMISSION] Skipping: affiliate ${affiliate.email} is an influencer (influencers do not receive commissions).`)
         } else {
             console.log(`[COMMISSION] Affiliate found: ${affiliate.email} (${affiliate.id})`)
 

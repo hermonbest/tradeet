@@ -32,7 +32,7 @@ export function MobileNav({ activeTab }: MobileNavProps) {
     ]
 
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-background/80 backdrop-blur-xl border-t border-border/40 px-8 py-4 pb-8 flex justify-between items-center z-50 lg:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 bg-background/80 dark:bg-background/80 backdrop-blur-xl px-8 py-4 pb-8 flex justify-between items-center z-50 lg:hidden">
             {navItems.map((item) => {
                 const isActive = currentTab === item.id
                 return (
