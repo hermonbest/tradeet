@@ -43,7 +43,7 @@ const PSYCHOLOGY_TAGS = [
     { label: '🎉 Perfect Entry', value: 'Perfect Entry' },
 ]
 
-export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
+export function TradeEntryForm({ onSuccess }: { onSuccess?: (data?: { isFirstTrade?: boolean; isFirstWin?: boolean; isComebackWin?: boolean }) => void }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
@@ -88,10 +88,14 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
 
         try {
             const result = await addTrade(tradeData)
-            if (result.error === 'TRADE_LIMIT_REACHED') {
-                setError('Trade limit reached! Free accounts are limited to 50 trades. Please upgrade to Pro for unlimited logging.')
-            } else if (result.error) {
-                setError(result.error)
+            if (!result.success) {
+                if (result.error === 'TRADE_LIMIT_REACHED') {
+                    setError('Trade limit reached! Free accounts are limited to 50 trades. Please upgrade to Pro for unlimited logging.')
+                } else if (result.error) {
+                    setError(result.error)
+                } else {
+                    setError('An unexpected error occurred. Please try again.')
+                }
             } else {
                 setSuccess(true)
                 setTimeout(() => {
@@ -100,7 +104,7 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                         ...form.formState.defaultValues,
                         trade_date: new Date().toISOString().split('T')[0],
                     })
-                    if (onSuccess) onSuccess()
+                    if (onSuccess && result.data) onSuccess({ isFirstTrade: result.data.isFirstTrade, isFirstWin: result.data.isFirstWin, isComebackWin: result.data.isComebackWin })
                 }, 900)
             }
         } catch {
@@ -322,7 +326,7 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: () => void }) {
                     disabled={loading || success}
                 >
                     {loading
-                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Adding...</>
                         : success
                             ? <><CheckCircle2 className="w-4 h-4 mr-2 text-green-400" /> Trade Added!</>
                             : 'Add Trade'

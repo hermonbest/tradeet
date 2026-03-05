@@ -11,11 +11,11 @@ import { getUserAffiliateStats } from '@/app/(dashboard)/actions'
 import { formatPrice } from '@/lib/constants'
 
 export const metadata: Metadata = {
-  title: "Settings — Configure Your Trading Journal",
-  description: "Manage your TradeET account settings, exchange rates, and preferences. Customize your trading journal experience.",
-  alternates: {
-    canonical: "https://tradeet.app/settings",
-  },
+    title: "Settings — Configure Your Trading Journal",
+    description: "Manage your TradeET account settings, exchange rates, and preferences. Customize your trading journal experience.",
+    alternates: {
+        canonical: "https://tradeet.app/settings",
+    },
 };
 
 export default async function SettingsPage() {
@@ -27,8 +27,9 @@ export default async function SettingsPage() {
     const isPro = profile?.role === 'pro' || profile?.role === 'admin'
 
     // Get affiliate stats
-    const affiliateStats = await getUserAffiliateStats()
-    const hasAffiliateCode = 'affiliateCode' in affiliateStats && affiliateStats.affiliateCode
+    const statsResult = await getUserAffiliateStats()
+    const stats = statsResult.success ? statsResult.data : null
+    const hasAffiliateCode = !!stats?.affiliateCode
 
     return (
         <div className="p-6 lg:p-8 max-w-3xl mx-auto space-y-8">
@@ -104,9 +105,9 @@ export default async function SettingsPage() {
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <p className="text-xs text-muted-foreground">Your Referral Code</p>
-                                            <code className="text-2xl font-bold tracking-wider text-primary">{affiliateStats.affiliateCode}</code>
+                                            <code className="text-2xl font-bold tracking-wider text-primary">{stats?.affiliateCode}</code>
                                         </div>
-                                        {'isInfluencer' in affiliateStats && affiliateStats.isInfluencer && (
+                                        {stats?.isInfluencer && (
                                             <Badge className="bg-yellow-500/20 text-yellow-600">
                                                 <Star className="w-3 h-3 mr-1" />
                                                 Influencer
@@ -116,23 +117,23 @@ export default async function SettingsPage() {
                                 </div>
 
                                 {/* Stats */}
-                                <div className={`grid ${('isInfluencer' in affiliateStats && affiliateStats.isInfluencer) ? 'grid-cols-2' : 'grid-cols-3'} gap-4`}>
+                                <div className={`grid ${stats?.isInfluencer ? 'grid-cols-2' : 'grid-cols-3'} gap-4`}>
                                     <div className="p-3 rounded-lg bg-muted/30 text-center">
                                         <Users className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                                        <p className="text-lg font-bold">{affiliateStats.totalReferrals}</p>
+                                        <p className="text-lg font-bold">{stats?.totalReferrals}</p>
                                         <p className="text-xs text-muted-foreground">Referrals</p>
                                     </div>
-                                    {!('isInfluencer' in affiliateStats && affiliateStats.isInfluencer) && (
+                                    {!stats?.isInfluencer && (
                                         <div className="p-3 rounded-lg bg-muted/30 text-center">
                                             <DollarSign className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-                                            <p className="text-lg font-bold">{formatPrice(affiliateStats.totalEarnings)}</p>
+                                            <p className="text-lg font-bold">{formatPrice(stats?.totalEarnings || 0)}</p>
                                             <p className="text-xs text-muted-foreground">Earnings</p>
                                         </div>
                                     )}
                                     <div className="p-3 rounded-lg bg-muted/30 text-center">
                                         <Award className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
                                         <p className="text-lg font-bold">20%</p>
-                                        <p className="text-xs text-muted-foreground">{('isInfluencer' in affiliateStats && affiliateStats.isInfluencer) ? 'Discount' : 'Commission'}</p>
+                                        <p className="text-xs text-muted-foreground">{stats?.isInfluencer ? 'Discount' : 'Commission'}</p>
                                     </div>
                                 </div>
 
@@ -146,7 +147,7 @@ export default async function SettingsPage() {
                                     </Button>
                                 </div>
 
-                                {'isInfluencer' in affiliateStats && affiliateStats.isInfluencer && (
+                                {stats?.isInfluencer && (
                                     <p className="text-xs text-center text-[#22c55e]">
                                         🎉 Your referrals get 20% off their upgrade!
                                     </p>
@@ -157,7 +158,7 @@ export default async function SettingsPage() {
                                 <p className="text-sm text-muted-foreground">
                                     Generate your unique affiliate code and start earning 20% commission on every referral who upgrades to Pro.
                                 </p>
-                                <AffiliateCodeGenerator isInfluencer={'isInfluencer' in affiliateStats && !!affiliateStats.isInfluencer} />
+                                <AffiliateCodeGenerator isInfluencer={!!stats?.isInfluencer} />
                             </>
                         )}
                     </CardContent>

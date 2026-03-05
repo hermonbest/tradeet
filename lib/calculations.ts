@@ -1,4 +1,6 @@
-export function calculateWinRate(trades: any[]) {
+import type { Trade } from './types';
+
+export function calculateWinRate(trades: Trade[]) {
     if (!trades || trades.length === 0) return 0
     const winningTrades = trades.filter((t) => t.profit_usd > 0).length
     const losingTrades = trades.filter((t) => t.profit_usd < 0).length
@@ -8,7 +10,7 @@ export function calculateWinRate(trades: any[]) {
     return (winningTrades / totalDecisiveTrades) * 100
 }
 
-export function calculateProfitFactor(trades: any[]) {
+export function calculateProfitFactor(trades: Trade[]) {
     if (!trades || trades.length === 0) return 0
 
     let grossProfit = 0
@@ -23,7 +25,7 @@ export function calculateProfitFactor(trades: any[]) {
     return grossProfit / grossLoss
 }
 
-export function calculateExpectancy(trades: any[]) {
+export function calculateExpectancy(trades: Trade[]) {
     if (!trades || trades.length === 0) return 0
 
     const winningTrades = trades.filter((t) => t.profit_usd > 0)
@@ -46,7 +48,7 @@ export function calculateExpectancy(trades: any[]) {
     return (winRate * avgWin) - (lossRate * avgLoss)
 }
 
-export function calculateDrawdown(trades: any[]) {
+export function calculateDrawdown(trades: Trade[]) {
     if (!trades || trades.length === 0) return 0
 
     // Drawdown needs sequential ordering to simulate equity curve
@@ -72,18 +74,18 @@ export function calculateDrawdown(trades: any[]) {
     return maxDrawdown
 }
 
-export function calculateNetPnL(trades: any[]) {
+export function calculateNetPnL(trades: Trade[]) {
     if (!trades || trades.length === 0) return 0
     return trades.reduce((sum, t) => sum + (t.profit_usd || 0), 0)
 }
 
-export function calculateAverageWin(trades: any[]) {
+export function calculateAverageWin(trades: Trade[]) {
     const winners = trades.filter((t) => (t.profit_usd || 0) > 0)
     if (winners.length === 0) return 0
     return winners.reduce((sum, t) => sum + t.profit_usd, 0) / winners.length
 }
 
-export function calculateAverageLoss(trades: any[]) {
+export function calculateAverageLoss(trades: Trade[]) {
     const losers = trades.filter((t) => (t.profit_usd || 0) < 0)
     if (losers.length === 0) return 0
     return losers.reduce((sum, t) => sum + t.profit_usd, 0) / losers.length

@@ -1,3 +1,20 @@
+/**
+ * ⚠️ SECURITY NOTICE ⚠️
+ * This file creates a Supabase admin client using the SERVICE ROLE KEY.
+ * The service role key bypasses Row Level Security (RLS) and has FULL database access.
+ *
+ * CRITICAL: Never import or use this client in:
+ * - Client Components ("use client")
+ * - Browser-side code
+ * - Any file that may be bundled and sent to the client
+ *
+ * ONLY use this in:
+ * - Server Actions
+ * - API Routes
+ * - Server Components (default in App Router)
+ * - Any secure server-side-only code
+ */
+
 import { createClient } from '@supabase/supabase-js'
 
 // This client uses the service role key and bypasses RLS.

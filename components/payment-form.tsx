@@ -58,8 +58,8 @@ export function PaymentForm({ amount, referralCode }: PaymentFormProps) {
             referral_code: referralCode
         })
 
-        if (result.error) {
-            alert(result.error)
+        if (!result.success) {
+            alert(result.error || 'An error occurred while submitting payment.')
         } else {
             setSuccess(true)
         }
@@ -142,7 +142,7 @@ export function PaymentForm({ amount, referralCode }: PaymentFormProps) {
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25"
                     disabled={loading || !file || !phone}
                 >
-                    {loading ? 'Submitting...' : `⚡ Submit Payment (${formatPrice(amount)})`}
+                    {loading ? 'Uploading...' : `⚡ Submit Payment (${formatPrice(amount)})`}
                 </Button>
 
                 <p className="text-xs text-center text-muted-foreground">

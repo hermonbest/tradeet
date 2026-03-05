@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { unstable_cache } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { TradeList } from '@/components/trade-list'
 import { AddTradeDialog } from '@/components/add-trade-dialog'
@@ -22,6 +24,36 @@ import { DashboardStats } from '@/components/dashboard-stats'
 
 import { WinRateDonut, EquityCurveChart, WinRateByDaysDonut, DailyPnLChart, ProgressHeatmap, PerformanceRadarChart } from '@/components/dashboard-charts'
 
+// Cached data fetching functions
+const getCachedTrades = unstable_cache(
+  async (userId: string) => {
+    const supabase = await createClient()
+    const { data: trades } = await supabase
+      .from('trades')
+      .select('*')
+      .eq('user_id', userId)
+      .order('trade_date', { ascending: false })
+      .order('created_at', { ascending: false })
+    return trades || []
+  },
+  ['trades'],
+  { revalidate: 60, tags: ['trades'] }
+)
+
+const getCachedProfile = unstable_cache(
+  async (userId: string) => {
+    const supabase = await createClient()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+    return profile
+  },
+  ['profile'],
+  { revalidate: 300, tags: ['profile'] }
+)
+
 export const metadata: Metadata = {
   title: "Dashboard — Your Trading Performance Analytics",
   description: "View your trading performance metrics, equity curve, win rate analysis, and P&L tracking. Track your progress with ETB currency support on TradeET.",
@@ -34,20 +66,19 @@ export default async function DashboardPage() {
     const supabase = await createClient()
 
     const { data: userData } = await supabase.auth.getUser()
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', userData?.user?.id).single()
+    
+    if (!userData?.user) {
+        redirect('/login')
+    }
+
+    // Use cached data fetching
+    const [profile, tradesList] = await Promise.all([
+        getCachedProfile(userData.user.id),
+        getCachedTrades(userData.user.id)
+    ])
 
     const isPro = profile?.role === 'pro' || profile?.role === 'admin'
     const isAdmin = profile?.role === 'admin'
-
-    // Fetch trades
-    const { data: trades } = await supabase
-        .from('trades')
-        .select('*')
-        .eq('user_id', userData?.user?.id)
-        .order('trade_date', { ascending: false })
-        .order('created_at', { ascending: false })
-
-    const tradesList = trades || []
     const exchangeRate = profile?.exchange_rate || 115
 
     const winRate = calculateWinRate(tradesList)

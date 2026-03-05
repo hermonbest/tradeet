@@ -3,6 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { MobileBottomNav } from '@/components/mobile-bottom-nav'
+import { OnboardingWrapper } from '@/components/onboarding-wrapper'
 
 export default async function DashboardLayout({
     children,
@@ -16,6 +17,20 @@ export default async function DashboardLayout({
         redirect('/login')
     }
 
+    // Fetch user's onboarding state
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_completed, first_trade_completed, first_win_completed')
+        .eq('id', user.id)
+        .single()
+
+    const serverOnboardingState = {
+        isFirstTimeUser: !profile?.onboarding_completed,
+        hasCompletedFirstTrade: profile?.first_trade_completed || false,
+        hasCompletedFirstWin: profile?.first_win_completed || false,
+        isOnboardingCompleted: profile?.onboarding_completed || false,
+    }
+
     return (
         <SidebarProvider>
             <AppSidebar />
@@ -23,11 +38,13 @@ export default async function DashboardLayout({
                 <div className="hidden md:flex sticky top-0 z-10 items-center h-10 px-3 border-b border-border/40 bg-background/80 backdrop-blur-sm">
                     <SidebarTrigger className="text-muted-foreground hover:text-foreground transition-colors" />
                 </div>
-                <div className="page-enter">
-                    {children}
-                </div>
-                {/* mobile bottom navigation shared across dashboard pages */}
-                <MobileBottomNav />
+                <OnboardingWrapper serverOnboardingState={serverOnboardingState}>
+                    <div className="page-enter">
+                        {children}
+                    </div>
+                    {/* mobile bottom navigation shared across dashboard pages */}
+                    <MobileBottomNav />
+                </OnboardingWrapper>
             </main>
         </SidebarProvider>
     )

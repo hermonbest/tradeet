@@ -20,11 +20,11 @@ import { AffiliateCodeGenerator } from '@/components/affiliate-code-generator'
 import { CopyButton } from '@/components/copy-button'
 
 export const metadata: Metadata = {
-  title: "Affiliate Program — Earn Rewards Sharing TradeET",
-  description: "Join the TradeET affiliate program. Share your referral code and earn rewards when friends upgrade to Pro. Track your referrals and earnings.",
-  alternates: {
-    canonical: "https://tradeet.app/affiliate",
-  },
+    title: "Affiliate Program — Earn Rewards Sharing TradeET",
+    description: "Join the TradeET affiliate program. Share your referral code and earn rewards when friends upgrade to Pro. Track your referrals and earnings.",
+    alternates: {
+        canonical: "https://tradeet.app/affiliate",
+    },
 };
 
 export default async function AffiliatePage() {
@@ -35,13 +35,25 @@ export default async function AffiliatePage() {
         redirect('/login')
     }
 
-    const stats = await getUserAffiliateStats()
+    const result = await getUserAffiliateStats()
 
-    if ('error' in stats) {
+    if ('error' in result) {
         return (
             <div className="p-8 max-w-4xl mx-auto">
                 <div className="tradeet-card p-8 text-center">
-                    <p className="text-red-500">Error loading affiliate data: {stats.error}</p>
+                    <p className="text-red-500">Error loading affiliate data: {result.error}</p>
+                </div>
+            </div>
+        )
+    }
+
+    const stats = result.data
+
+    if (!stats) {
+        return (
+            <div className="p-8 max-w-4xl mx-auto">
+                <div className="tradeet-card p-8 text-center">
+                    <p className="text-muted-foreground">No affiliate data found.</p>
                 </div>
             </div>
         )
@@ -184,7 +196,7 @@ export default async function AffiliatePage() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {(stats.commissions || []).map((commission) => (
+                                                {(stats.commissions || []).map((commission: any) => (
                                                     <tr key={commission.id} className="border-b border-border/50">
                                                         <td className="py-3 px-4 text-sm">
                                                             {new Date(commission.created_at).toLocaleDateString()}

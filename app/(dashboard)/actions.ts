@@ -2,25 +2,65 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { generateAffiliateCode } from '@/lib/affiliate'
 import { calculateCommission } from '@/lib/constants'
+import { z } from 'zod'
+import type { Result } from '@/lib/types'
+
+// Zod Schemas for Server Action Validation
+const TradeSchema = z.object({
+    pair: z.string().min(1).max(20),
+    entry_price: z.string().min(1),
+    exit_price: z.string().optional(),
+    stop_loss: z.string().optional(),
+    take_profit: z.string().optional(),
+    lot_size: z.string().optional(),
+    profit_usd: z.string().optional(),
+    notes: z.string().optional(),
+    trade_date: z.string().optional(),
+    screenshot_url: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+})
+
+const PaymentSchema = z.object({
+    phone_number: z.string().min(1),
+    screenshot_url: z.string().min(1),
+    amount: z.number().optional(),
+    referral_code: z.string().optional(),
+})
+
+const ExchangeRateSchema = z.object({
+    rate: z.number().positive(),
+})
+
+const ReferralCodeSchema = z.object({
+    code: z.string().min(3).max(20),
+})
 
 // ... existing actions (addTrade, deleteTrade, updateExchangeRate)
 
-export async function addTrade(data: any) {
+export async function addTrade(data: unknown): Promise<Result<{ isFirstTrade: boolean; isFirstWin: boolean; isComebackWin?: boolean }>> {
     const supabase = await createClient()
+
+    // Validate input data
+    const parseResult = TradeSchema.safeParse(data)
+    if (!parseResult.success) {
+        return { success: false, error: 'Invalid trade data: ' + parseResult.error.message }
+    }
+
+    const validatedData = parseResult.data
 
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
     // Check free user trade limit (50 trades max)
     const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, first_trade_completed, first_win_completed')
         .eq('id', userData.user.id)
         .single()
 
@@ -31,77 +71,123 @@ export async function addTrade(data: any) {
             .eq('user_id', userData.user.id)
 
         if ((count ?? 0) >= 50) {
-            return { error: 'TRADE_LIMIT_REACHED' }
+            return { success: false, error: 'TRADE_LIMIT_REACHED', code: 'TRADE_LIMIT_REACHED' }
         }
     }
 
+    const profitUsd = validatedData.profit_usd ? parseFloat(validatedData.profit_usd) : 0
+    const isFirstTrade = !profile?.first_trade_completed
+    const isFirstWin = !profile?.first_win_completed && profitUsd > 0
+
+    // Get trade count to detect comeback wins (first win after multiple losses)
+    let tradeCount = 0
+    let lossCount = 0
+    if (!isFirstTrade) {
+        const { count: totalTrades } = await supabase
+            .from('trades')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userData.user.id)
+        tradeCount = totalTrades || 0
+
+        const { data: losingTrades } = await supabase
+            .from('trades')
+            .select('profit_usd')
+            .eq('user_id', userData.user.id)
+            .lt('profit_usd', 0)
+        lossCount = losingTrades?.length || 0
+    }
+
+    const isComebackWin = isFirstWin && tradeCount >= 3 && lossCount >= 2
+
     const { error } = await supabase.from('trades').insert({
         user_id: userData.user.id,
-        pair: data.pair,
-        entry_price: parseFloat(data.entry_price),
-        exit_price: data.exit_price ? parseFloat(data.exit_price) : null,
-        stop_loss: data.stop_loss ? parseFloat(data.stop_loss) : null,
-        take_profit: data.take_profit ? parseFloat(data.take_profit) : null,
-        lot_size: data.lot_size ? parseFloat(data.lot_size) : null,
-        notes: data.notes || '',
-        profit_usd: data.profit_usd ? parseFloat(data.profit_usd) : 0,
-        trade_date: data.trade_date,
-        screenshot_url: data.screenshot_url || null,
-        tags: data.tags || [],
+        pair: validatedData.pair,
+        entry_price: parseFloat(validatedData.entry_price),
+        exit_price: validatedData.exit_price ? parseFloat(validatedData.exit_price) : null,
+        stop_loss: validatedData.stop_loss ? parseFloat(validatedData.stop_loss) : null,
+        take_profit: validatedData.take_profit ? parseFloat(validatedData.take_profit) : null,
+        lot_size: validatedData.lot_size ? parseFloat(validatedData.lot_size) : null,
+        notes: validatedData.notes || '',
+        profit_usd: profitUsd,
+        trade_date: validatedData.trade_date,
+        screenshot_url: validatedData.screenshot_url || null,
+        tags: validatedData.tags || [],
     })
 
     if (error) {
         console.error('Error adding trade:', error)
-        return { error: error.message }
+        return { success: false, error: error.message }
+    }
+
+    // Update onboarding flags if needed
+    if (isFirstTrade || isFirstWin) {
+        const updates: Record<string, boolean> = {}
+        if (isFirstTrade) updates.first_trade_completed = true
+        if (isFirstWin) updates.first_win_completed = true
+
+        await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', userData.user.id)
     }
 
     revalidatePath('/')
     revalidatePath('/calendar')
-    return { success: true }
+    revalidateTag('trades', {})
+    return { success: true, data: { isFirstTrade, isFirstWin, isComebackWin } }
 }
 
-export async function updateTrade(id: string, data: any) {
+export async function updateTrade(id: string, data: unknown): Promise<Result> {
     const supabase = await createClient()
+
+    // Validate input data
+    const parseResult = TradeSchema.safeParse(data)
+    if (!parseResult.success) {
+        return { success: false, error: 'Invalid trade data: ' + parseResult.error.message }
+    }
+
+    const validatedData = parseResult.data
 
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
     const { error } = await supabase
         .from('trades')
         .update({
-            pair: data.pair,
-            entry_price: parseFloat(data.entry_price),
-            exit_price: data.exit_price ? parseFloat(data.exit_price) : null,
-            stop_loss: data.stop_loss ? parseFloat(data.stop_loss) : null,
-            take_profit: data.take_profit ? parseFloat(data.take_profit) : null,
-            lot_size: data.lot_size ? parseFloat(data.lot_size) : null,
-            notes: data.notes || '',
-            profit_usd: data.profit_usd ? parseFloat(data.profit_usd) : 0,
-            trade_date: data.trade_date,
-            screenshot_url: data.screenshot_url || null,
-            tags: data.tags || [],
+            pair: validatedData.pair,
+            entry_price: parseFloat(validatedData.entry_price),
+            exit_price: validatedData.exit_price ? parseFloat(validatedData.exit_price) : null,
+            stop_loss: validatedData.stop_loss ? parseFloat(validatedData.stop_loss) : null,
+            take_profit: validatedData.take_profit ? parseFloat(validatedData.take_profit) : null,
+            lot_size: validatedData.lot_size ? parseFloat(validatedData.lot_size) : null,
+            notes: validatedData.notes || '',
+            profit_usd: validatedData.profit_usd ? parseFloat(validatedData.profit_usd) : 0,
+            trade_date: validatedData.trade_date,
+            screenshot_url: validatedData.screenshot_url || null,
+            tags: validatedData.tags || [],
         })
         .eq('id', id)
         .eq('user_id', userData.user.id) // Ensure users can only edit their own trades
 
     if (error) {
         console.error('Error updating trade:', error)
-        return { error: error.message }
+        return { success: false, error: error.message }
     }
 
     revalidatePath('/')
     revalidatePath('/calendar')
+    revalidateTag('trades', {})
     return { success: true }
 }
 
-export async function deleteTrade(id: string) {
+export async function deleteTrade(id: string): Promise<Result> {
     const supabase = await createClient()
     const { data: userData, error: userError } = await supabase.auth.getUser()
 
     if (userError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
     // Attempt to delete and return the deleted row to verify it actually happened
@@ -114,178 +200,144 @@ export async function deleteTrade(id: string) {
 
     if (error) {
         console.error('Error deleting trade:', error)
-        return { error: error.message }
+        return { success: false, error: error.message }
     }
 
     if (!data || data.length === 0) {
-        return { error: 'Trade not found or you do not have permission to delete it. (It might belong to a different user if it was seeded data)' }
+        return { success: false, error: 'Trade not found or you do not have permission to delete it. (It might belong to a different user if it was seeded data)' }
     }
 
     revalidatePath('/')
     revalidatePath('/calendar')
+    revalidateTag('trades', {})
     return { success: true }
 }
 
-export async function updateExchangeRate(rate: number) {
+export async function updateExchangeRate(rate: unknown): Promise<Result> {
     const supabase = await createClient()
+
+    // Validate input data
+    const parseResult = ExchangeRateSchema.safeParse({ rate })
+    if (!parseResult.success) {
+        return { success: false, error: 'Invalid exchange rate: ' + parseResult.error.message }
+    }
+
     const { data: userData } = await supabase.auth.getUser()
 
-    if (!userData?.user) return { error: 'Not authenticated' }
+    if (!userData?.user) {
+        return { success: false, error: 'Not authenticated' }
+    }
 
     const { error } = await supabase
         .from('profiles')
-        .update({ exchange_rate: rate })
+        .update({ exchange_rate: parseResult.data.rate })
         .eq('id', userData.user.id)
 
-    if (error) return { error: error.message }
+    if (error) {
+        return { success: false, error: error.message }
+    }
 
     revalidatePath('/')
+    revalidateTag('profile', {})
     return { success: true }
 }
 
-export async function submitPayment(data: {
-    phone_number: string,
-    screenshot_url: string,
-    amount?: number,
-    referral_code?: string
-}) {
+export async function submitPayment(data: unknown): Promise<Result> {
     const supabase = await createClient()
+
+    // Validate input data
+    const parseResult = PaymentSchema.safeParse(data)
+    if (!parseResult.success) {
+        return { success: false, error: 'Invalid payment data: ' + parseResult.error.message }
+    }
+
+    const validatedData = parseResult.data
     const { data: userData } = await supabase.auth.getUser()
 
-    if (!userData?.user) return { error: 'Not authenticated' }
+    if (!userData?.user) {
+        return { success: false, error: 'Not authenticated' }
+    }
 
     const { error } = await supabase.from('payments').insert({
         user_id: userData.user.id,
-        phone_number: data.phone_number,
-        screenshot_url: data.screenshot_url,
-        amount: data.amount || 3000,
-        referral_code: data.referral_code || null,
+        phone_number: validatedData.phone_number,
+        screenshot_url: validatedData.screenshot_url,
+        amount: validatedData.amount || 3000,
+        referral_code: validatedData.referral_code || null,
         status: 'pending'
     })
 
-    if (error) return { error: error.message }
+    if (error) {
+        return { success: false, error: error.message }
+    }
 
     // Email Notification logic
-    console.log(`[PAYMENT_ALERT] New payment submitted by ${userData.user.email}. Amount: ${data.amount || 3000} ETB. Receipt: ${data.screenshot_url}. Alerting hermonbest@gmail.com`)
+    console.log(`[PAYMENT_ALERT] New payment submitted by ${userData.user.email}. Amount: ${validatedData.amount || 3000} ETB. Receipt: ${validatedData.screenshot_url}. Alerting hermonbest@gmail.com`)
 
     revalidatePath('/upgrade')
     revalidatePath('/admin')
     return { success: true }
 }
 
-export async function approvePayment(paymentId: string, userId: string, actualAmount?: number) {
+export async function approvePayment(
+    paymentId: string,
+    userId: string,
+    actualAmount?: number
+): Promise<Result> {
     const supabase = await createClient()
     const { data: userData } = await supabase.auth.getUser()
 
-    if (!userData?.user) return { error: 'Not authenticated' }
+    if (!userData?.user) {
+        return { success: false, error: 'Not authenticated' }
+    }
 
     // Check if admin
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', userData.user.id).single()
-    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
-
-    // Get payment details including referral code
-    const { data: payment } = await supabase
-        .from('payments')
-        .select('referral_code, amount')
-        .eq('id', paymentId)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
         .single()
 
-    // Update profile to pro
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role: 'pro' })
-        .eq('id', userId)
+    if (profile?.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' }
+    }
 
-    if (profileError) return { error: profileError.message }
+    // Use atomic database function
+    const { data: result, error } = await supabase.rpc('approve_payment_with_commission', {
+        p_payment_id: paymentId,
+        p_actual_amount: actualAmount || null
+    })
 
-    // Set actual amount if provided
-    const finalAmount = actualAmount || payment?.amount || 3000
+    if (error) {
+        return { success: false, error: error.message }
+    }
 
-    // Update payment status with actual amount
-    const { error: paymentError } = await supabase
-        .from('payments')
-        .update({
-            status: 'approved',
-            actual_amount: finalAmount
-        })
-        .eq('id', paymentId)
-
-    if (paymentError) return { error: paymentError.message }
-
-    // Record commission if referral code was used
-    if (payment?.referral_code) {
-        const normalizedCode = payment.referral_code.toUpperCase().trim()
-        console.log(`[COMMISSION] Referral code on payment: "${normalizedCode}", looking up affiliate...`)
-
-        // Use admin client to bypass RLS — we need to read another user's profile row
-        const adminClient = createAdminClient()
-        const { data: affiliate, error: affiliateLookupError } = await adminClient
-            .from('profiles')
-            .select('id, email, is_influencer')
-            .eq('affiliate_code', normalizedCode)
-            .single()
-
-        if (affiliateLookupError || !affiliate) {
-            console.error('[COMMISSION] Affiliate not found for code:', normalizedCode, affiliateLookupError)
-        } else if (affiliate.id === userId) {
-            console.warn('[COMMISSION] Skipping: affiliate is the same as the paying user (self-referral). Affiliate ID:', affiliate.id)
-        } else if (affiliate.is_influencer) {
-            console.log(`[COMMISSION] Skipping: affiliate ${affiliate.email} is an influencer (influencers do not receive commissions).`)
-        } else {
-            console.log(`[COMMISSION] Affiliate found: ${affiliate.email} (${affiliate.id})`)
-
-            // Check if commission already exists
-            const { data: existingCommission } = await supabase
-                .from('commissions')
-                .select('id')
-                .eq('affiliate_id', affiliate.id)
-                .eq('referred_user_id', userId)
-                .single()
-
-            if (existingCommission) {
-                console.warn('[COMMISSION] Commission already exists, skipping duplicate.')
-            } else {
-                const commissionAmount = calculateCommission(finalAmount)
-                console.log(`[COMMISSION] Creating commission: ${commissionAmount} ETB for affiliate ${affiliate.email}`)
-
-                // Create commission record
-                const { error: commissionError } = await supabase
-                    .from('commissions')
-                    .insert({
-                        affiliate_id: affiliate.id,
-                        referred_user_id: userId,
-                        amount_due: commissionAmount,
-                        status: 'pending',
-                        payment_id: paymentId
-                    })
-
-                if (commissionError) {
-                    console.error('[COMMISSION] Failed to insert commission record:', commissionError)
-                    // Return partial success with a warning so it's visible in admin
-                    revalidatePath('/admin')
-                    return { success: true, warning: `Commission could not be recorded: ${commissionError.message}` }
-                } else {
-                    console.log('[COMMISSION] Commission created successfully!')
-                }
-            }
-        }
-    } else {
-        console.log('[COMMISSION] No referral code on this payment. No commission to record.')
+    if (!result?.success) {
+        return { success: false, error: result?.error || 'Approval failed' }
     }
 
     revalidatePath('/admin')
     return { success: true }
 }
 
-export async function rejectPayment(paymentId: string) {
+export async function rejectPayment(paymentId: string): Promise<Result> {
     const supabase = await createClient()
     const { data: userData } = await supabase.auth.getUser()
 
-    if (!userData?.user) return { error: 'Not authenticated' }
+    if (!userData?.user) {
+        return { success: false, error: 'Not authenticated' }
+    }
 
     // Check if admin
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', userData.user.id).single()
-    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single()
+
+    if (profile?.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' }
+    }
 
     // Update payment status
     const { error: paymentError } = await supabase
@@ -293,44 +345,59 @@ export async function rejectPayment(paymentId: string) {
         .update({ status: 'rejected' })
         .eq('id', paymentId)
 
-    if (paymentError) return { error: paymentError.message }
+    if (paymentError) {
+        return { success: false, error: paymentError.message }
+    }
 
     revalidatePath('/admin')
     return { success: true }
 }
 
-export async function revokePro(userId: string) {
+export async function revokePro(userId: string): Promise<Result> {
     const supabase = await createClient()
     const { data: userData } = await supabase.auth.getUser()
 
-    if (!userData?.user) return { error: 'Not authenticated' }
+    if (!userData?.user) {
+        return { success: false, error: 'Not authenticated' }
+    }
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', userData.user.id).single()
-    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userData.user.id)
+        .single()
+
+    if (profile?.role !== 'admin') {
+        return { success: false, error: 'Unauthorized' }
+    }
 
     const { error } = await supabase
         .from('profiles')
         .update({ role: 'free' })
         .eq('id', userId)
 
-    if (error) return { error: error.message }
+    if (error) {
+        return { success: false, error: error.message }
+    }
 
     revalidatePath('/admin')
     return { success: true }
 }
 
-export async function deleteAccount() {
+export async function deleteAccount(): Promise<Result> {
     const supabase = await createClient()
     const { data: userData } = await supabase.auth.getUser()
 
-    if (!userData?.user) return { error: 'Not authenticated' }
+    if (!userData?.user) {
+        return { success: false, error: 'Not authenticated' }
+    }
 
     // Call the secure Postgres function to delete the auth.users record
     const { error } = await supabase.rpc('delete_own_account')
 
     if (error) {
         console.error('Error deleting account:', error)
-        return { error: 'Failed to delete account. Please contact support.' }
+        return { success: false, error: 'Failed to delete account. Please contact support.' }
     }
 
     // Sign out to clear local session cookies
@@ -341,70 +408,43 @@ export async function deleteAccount() {
 // ==================== AFFILIATE SYSTEM ACTIONS ====================
 
 // Generate affiliate code for current user
-export async function generateUserAffiliateCode() {
+export async function generateUserAffiliateCode(): Promise<Result<{ code: string }>> {
     const supabase = await createClient()
     const { data: userData, error: authError } = await supabase.auth.getUser()
 
     if (authError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
-    // Check if user already has a code
-    const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('affiliate_code, name')
-        .eq('id', userData.user.id)
-        .single()
+    // Use the database function to atomically generate unique code
+    const { data: code, error } = await supabase.rpc('generate_unique_affiliate_code', {
+        p_user_id: userData.user.id
+    })
 
-    if (existingProfile?.affiliate_code) {
-        return { error: 'You already have an affiliate code', code: existingProfile.affiliate_code }
-    }
-
-    // Generate unique code
-    let code: string
-    let attempts = 0
-    const maxAttempts = 10
-
-    do {
-        code = generateAffiliateCode(existingProfile?.name || userData.user.email?.split('@')[0])
-
-        // Check if code is unique
-        const { data: existing } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('affiliate_code', code)
-            .single()
-
-        if (!existing) break
-        attempts++
-    } while (attempts < maxAttempts)
-
-    if (attempts >= maxAttempts) {
-        return { error: 'Could not generate unique code. Please try again.' }
-    }
-
-    // Save code to profile
-    const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ affiliate_code: code })
-        .eq('id', userData.user.id)
-
-    if (updateError) {
-        return { error: updateError.message }
+    if (error) {
+        return { success: false, error: error.message }
     }
 
     revalidatePath('/settings')
     revalidatePath('/affiliate')
-    return { success: true, code }
+    return { success: true, data: { code } }
 }
 
 // Apply referral code to current user
-export async function applyReferralCode(code: string) {
+export async function applyReferralCode(code: unknown): Promise<Result<{ isInfluencer: boolean; message: string }>> {
     const supabase = await createClient()
+
+    // Validate input data
+    const parseResult = ReferralCodeSchema.safeParse({ code })
+    if (!parseResult.success) {
+        return { success: false, error: 'Invalid referral code: ' + parseResult.error.message }
+    }
+
+    const validatedCode = parseResult.data.code
     const { data: userData, error: authError } = await supabase.auth.getUser()
 
     if (authError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
     // Validate code — use admin client to bypass RLS on profiles table
@@ -412,16 +452,16 @@ export async function applyReferralCode(code: string) {
     const { data: affiliate, error: affiliateError } = await adminClient
         .from('profiles')
         .select('id, is_influencer, affiliate_code')
-        .eq('affiliate_code', code.toUpperCase().trim())
+        .eq('affiliate_code', validatedCode.toUpperCase().trim())
         .single()
 
     if (affiliateError || !affiliate) {
-        return { error: 'Invalid referral code' }
+        return { success: false, error: 'Invalid referral code' }
     }
 
     // Prevent self-referral
     if (affiliate.id === userData.user.id) {
-        return { error: 'Cannot use your own referral code' }
+        return { success: false, error: 'Cannot use your own referral code' }
     }
 
     // Apply referral
@@ -431,25 +471,38 @@ export async function applyReferralCode(code: string) {
         .eq('id', userData.user.id)
 
     if (updateError) {
-        return { error: updateError.message }
+        return { success: false, error: updateError.message }
     }
 
     return {
         success: true,
-        isInfluencer: affiliate.is_influencer,
-        message: affiliate.is_influencer
-            ? '🎉 Influencer code applied! You get 20% off.'
-            : 'Referral code applied!'
+        data: {
+            isInfluencer: affiliate.is_influencer,
+            message: affiliate.is_influencer
+                ? '🎉 Influencer code applied! You get 20% off.'
+                : 'Referral code applied!'
+        }
     }
 }
 
 // Get affiliate stats for current user
-export async function getUserAffiliateStats() {
+export async function getUserAffiliateStats(): Promise<Result<{
+    affiliateCode: string | null;
+    isInfluencer: boolean;
+    referredById: string | null;
+    totalReferrals: number;
+    pendingCommissions: number;
+    paidCommissions: number;
+    pendingEarnings: number;
+    totalPaidEarnings: number;
+    totalEarnings: number;
+    commissions: any[];
+}>> {
     const supabase = await createClient()
     const { data: userData, error: authError } = await supabase.auth.getUser()
 
     if (authError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
     // Get profile with affiliate info
@@ -460,13 +513,20 @@ export async function getUserAffiliateStats() {
         .single()
 
     if (profileError) {
-        return { error: profileError.message }
+        return { success: false, error: profileError.message }
     }
 
-    // Get commissions
+    // Get commissions with referred user details
     const { data: commissions, error: commissionError } = await supabase
         .from('commissions')
-        .select('*')
+        .select(`
+            *,
+            referred_user:profiles!referred_user_id (
+                id,
+                email,
+                name
+            )
+        `)
         .eq('affiliate_id', userData.user.id)
 
     if (commissionError) {
@@ -491,26 +551,29 @@ export async function getUserAffiliateStats() {
     const totalPaidEarnings = paidCommissions.reduce((sum, c) => sum + (c.amount_due || 0), 0)
 
     return {
-        affiliateCode: profile?.affiliate_code,
-        isInfluencer: profile?.is_influencer,
-        referredById: profile?.referred_by_id,
-        totalReferrals: referralCount || 0,
-        pendingCommissions: pendingCommissions.length,
-        paidCommissions: paidCommissions.length,
-        pendingEarnings,
-        totalPaidEarnings,
-        totalEarnings: pendingEarnings + totalPaidEarnings,
-        commissions: commissionList
+        success: true,
+        data: {
+            affiliateCode: profile?.affiliate_code || null,
+            isInfluencer: profile?.is_influencer || false,
+            referredById: profile?.referred_by_id || null,
+            totalReferrals: referralCount || 0,
+            pendingCommissions: pendingCommissions.length,
+            paidCommissions: paidCommissions.length,
+            pendingEarnings,
+            totalPaidEarnings,
+            totalEarnings: pendingEarnings + totalPaidEarnings,
+            commissions: commissionList
+        }
     }
 }
 
 // Toggle influencer status (admin only)
-export async function toggleInfluencerStatusAction(userId: string, isInfluencer: boolean) {
+export async function toggleInfluencerStatusAction(userId: string, isInfluencer: boolean): Promise<Result> {
     const supabase = await createClient()
     const { data: userData, error: authError } = await supabase.auth.getUser()
 
     if (authError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
     // Check if admin
@@ -521,7 +584,7 @@ export async function toggleInfluencerStatusAction(userId: string, isInfluencer:
         .single()
 
     if (profileError || profile?.role !== 'admin') {
-        return { error: 'Unauthorized' }
+        return { success: false, error: 'Unauthorized' }
     }
 
     const { error } = await supabase
@@ -530,7 +593,7 @@ export async function toggleInfluencerStatusAction(userId: string, isInfluencer:
         .eq('id', userId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, error: error.message }
     }
 
     revalidatePath('/admin')
@@ -538,12 +601,12 @@ export async function toggleInfluencerStatusAction(userId: string, isInfluencer:
 }
 
 // Mark commission as paid (admin only)
-export async function payCommission(commissionId: string) {
+export async function payCommission(commissionId: string): Promise<Result> {
     const supabase = await createClient()
     const { data: userData, error: authError } = await supabase.auth.getUser()
 
     if (authError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
     // Check if admin
@@ -554,7 +617,7 @@ export async function payCommission(commissionId: string) {
         .single()
 
     if (profileError || profile?.role !== 'admin') {
-        return { error: 'Unauthorized' }
+        return { success: false, error: 'Unauthorized' }
     }
 
     const { error } = await supabase
@@ -563,7 +626,7 @@ export async function payCommission(commissionId: string) {
         .eq('id', commissionId)
 
     if (error) {
-        return { error: error.message }
+        return { success: false, error: error.message }
     }
 
     revalidatePath('/admin')
@@ -571,12 +634,12 @@ export async function payCommission(commissionId: string) {
 }
 
 // Get all affiliates with stats (admin only)
-export async function getAffiliatesAdmin() {
+export async function getAffiliatesAdmin(): Promise<Result<{ affiliates: unknown[] }>> {
     const supabase = await createClient()
     const { data: userData, error: authError } = await supabase.auth.getUser()
 
     if (authError || !userData?.user) {
-        return { error: 'Not authenticated' }
+        return { success: false, error: 'Not authenticated' }
     }
 
     // Check if admin
@@ -587,7 +650,7 @@ export async function getAffiliatesAdmin() {
         .single()
 
     if (profileError || profile?.role !== 'admin') {
-        return { error: 'Unauthorized' }
+        return { success: false, error: 'Unauthorized' }
     }
 
     // Get all affiliates
@@ -598,7 +661,7 @@ export async function getAffiliatesAdmin() {
         .order('created_at', { ascending: false })
 
     if (affiliatesError) {
-        return { error: affiliatesError.message }
+        return { success: false, error: affiliatesError.message }
     }
 
     // Get commissions for all affiliates
@@ -638,5 +701,150 @@ export async function getAffiliatesAdmin() {
         }
     })
 
-    return { affiliates: affiliatesWithStats }
+    return { success: true, data: { affiliates: affiliatesWithStats } }
+}
+
+// ============================================
+// ONBOARDING ACTIONS
+// ============================================
+
+/**
+ * Complete onboarding step
+ */
+export async function completeOnboardingStep() {
+    const supabase = await createClient()
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({
+            onboarding_completed: true,
+            last_onboarding_step: 999
+        })
+        .eq('id', userData.user.id)
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+/**
+ * Mark first trade as completed
+ */
+export async function markFirstTradeComplete() {
+    const supabase = await createClient()
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ first_trade_completed: true })
+        .eq('id', userData.user.id)
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+/**
+ * Mark first win as completed
+ */
+export async function markFirstWinComplete() {
+    const supabase = await createClient()
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ first_win_completed: true })
+        .eq('id', userData.user.id)
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+/**
+ * Get user's onboarding state
+ */
+export async function getOnboardingState() {
+    const supabase = await createClient()
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData?.user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('onboarding_completed, first_trade_completed, first_win_completed, onboarding_step')
+        .eq('id', userData.user.id)
+        .single()
+
+    if (profileError) {
+        return { error: profileError.message }
+    }
+
+    // Get trade count to determine if user is truly a beginner
+    const { count } = await supabase
+        .from('trades')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userData.user.id)
+
+    return {
+        onboarding_completed: profile?.onboarding_completed || false,
+        first_trade_completed: profile?.first_trade_completed || false,
+        first_win_completed: profile?.first_win_completed || false,
+        onboarding_step: profile?.onboarding_step || 0,
+        trade_count: count || 0,
+    }
+}
+
+/**
+ * Reset onboarding (for testing or if user wants to retake tour)
+ */
+export async function resetOnboarding(): Promise<Result> {
+    const supabase = await createClient()
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData?.user) {
+        return { success: false, error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({
+            onboarding_completed: false,
+            first_trade_completed: false,
+            first_win_completed: false,
+            onboarding_step: 0,
+            last_onboarding_step: 0,
+        })
+        .eq('id', userData.user.id)
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
 }

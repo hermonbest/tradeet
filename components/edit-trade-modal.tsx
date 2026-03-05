@@ -106,8 +106,8 @@ export function EditTradeModal({ trade, isOpen, onClose }: { trade: any; isOpen:
 
         try {
             const result = await updateTrade(trade.id, tradeData)
-            if (result.error) {
-                setError(result.error)
+            if (!result.success) {
+                setError(result.message || 'Failed to update trade.')
             } else {
                 form.reset()
                 onClose()
@@ -291,7 +291,7 @@ export function EditTradeModal({ trade, isOpen, onClose }: { trade: any; isOpen:
                                     className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold"
                                     disabled={loading}
                                 >
-                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
+                                    {loading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</> : 'Save Changes'}
                                 </Button>
                             </div>
                         </form>
