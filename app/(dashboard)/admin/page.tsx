@@ -18,7 +18,7 @@ async function approvePaymentAction(formData: FormData) {
 
     if (!paymentId || !userId) {
         console.error('Missing payment or user ID in approvePaymentAction')
-        throw new Error('Missing payment or user ID')
+        return
     }
 
     console.log(`Approving payment ${paymentId} for user ${userId} with amount ${actualAmount}`)
@@ -27,11 +27,10 @@ async function approvePaymentAction(formData: FormData) {
 
     if (!result.success) {
         console.error('Failed to approve payment:', result.error)
-        throw new Error(result.error || 'Failed to approve payment')
+        return
     }
 
     console.log('Payment approved successfully')
-    return result
 }
 
 async function rejectPaymentAction(formData: FormData) {
@@ -41,7 +40,7 @@ async function rejectPaymentAction(formData: FormData) {
 
     if (!paymentId) {
         console.error('Missing payment ID in rejectPaymentAction')
-        throw new Error('Missing payment ID')
+        return
     }
 
     console.log(`Rejecting payment ${paymentId}`)
@@ -50,11 +49,10 @@ async function rejectPaymentAction(formData: FormData) {
 
     if (!result.success) {
         console.error('Failed to reject payment:', result.error)
-        throw new Error(result.error || 'Failed to reject payment')
+        return
     }
 
     console.log('Payment rejected successfully')
-    return result
 }
 
 export default async function AdminPage() {
