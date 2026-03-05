@@ -169,6 +169,8 @@ export default async function AdminPage() {
                                                 type="number"
                                                 placeholder={`Actual amount (${payment.amount || 3000})`}
                                                 className="text-xs h-8"
+                                                defaultValue={payment.amount || 3000}
+                                                title="Override the actual payment amount if different from claimed"
                                             />
                                             <Button type="submit" className="w-full bg-[#22c55e]/20 hover:bg-[#22c55e]/30 text-[#22c55e] border border-[#22c55e]/40" variant="ghost" size="sm">
                                                 ✅ Approve
@@ -177,8 +179,8 @@ export default async function AdminPage() {
                                         <form action={async () => {
                                             'use server'
                                             await rejectPayment(payment.id)
-                                        }} className="flex-1">
-                                            <Button type="submit" className="w-full mt-8" variant="destructive" size="sm">
+                                        }} className="flex-1 flex flex-col justify-end">
+                                            <Button type="submit" className="w-full" variant="destructive" size="sm">
                                                 ❌ Reject
                                             </Button>
                                         </form>

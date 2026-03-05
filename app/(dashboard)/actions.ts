@@ -307,18 +307,74 @@ export async function approvePayment(
         return { success: false, error: 'Unauthorized' }
     }
 
-    // Use atomic database function
-    const { data: result, error } = await supabase.rpc('approve_payment_with_commission', {
-        p_payment_id: paymentId,
-        p_actual_amount: actualAmount || null
-    })
+    // Get payment details
+    const { data: payment, error: paymentError } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('id', paymentId)
+        .eq('status', 'pending')
+        .single()
 
-    if (error) {
-        return { success: false, error: error.message }
+    if (paymentError || !payment) {
+        return { success: false, error: 'Payment not found or already processed' }
     }
 
-    if (!result?.success) {
-        return { success: false, error: result?.error || 'Approval failed' }
+    const finalAmount = actualAmount || payment.amount || 3000
+
+    // Update payment status
+    const { error: updatePaymentError } = await supabase
+        .from('payments')
+        .update({
+            status: 'approved',
+            amount: finalAmount,
+            approved_at: new Date().toISOString()
+        })
+        .eq('id', paymentId)
+
+    if (updatePaymentError) {
+        return { success: false, error: updatePaymentError.message }
+    }
+
+    // Update user role to pro
+    const { error: updateProfileError } = await supabase
+        .from('profiles')
+        .update({
+            role: 'pro',
+            upgraded_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+
+    if (updateProfileError) {
+        return { success: false, error: updateProfileError.message }
+    }
+
+    // Handle commission if referral code exists
+    if (payment.referral_code) {
+        // Find the affiliate
+        const { data: affiliate } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('affiliate_code', payment.referral_code)
+            .single()
+
+        if (affiliate) {
+            const commissionAmount = finalAmount * 0.10 // 10% commission
+
+            const { error: commissionError } = await supabase
+                .from('commissions')
+                .insert({
+                    affiliate_id: affiliate.id,
+                    referred_user_id: userId,
+                    payment_id: paymentId,
+                    amount_due: commissionAmount,
+                    status: 'pending'
+                })
+
+            if (commissionError) {
+                console.error('Error creating commission:', commissionError)
+                // Don't fail the whole operation for commission errors
+            }
+        }
     }
 
     revalidatePath('/admin')

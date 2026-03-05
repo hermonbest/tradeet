@@ -27,26 +27,26 @@ This document outlines the manual testing procedures and checks for the TradeEt 
 - [x] Login with correct/incorrect credentials
 - [ ] Forgot password (if available)
 - [x] Dashboard overview: account stats, trade summary
-- [ ] Trade entry form: input validation, submit/cancel
-- [ ] Trade list: pagination, sort, filter, search
-- [ ] Trade details modal: open/close, view data
-- [ ] Edit trade: changes persist, validation
-- [ ] Delete trade: confirmation dialog
-- [ ] Calendar view: view trades by date
+- [x] Trade entry form: input validation, submit/cancel
+- [x] Trade list: pagination, sort, filter, search
+- [x] Trade details modal: open/close, view data
+- [x] Edit trade: changes persist, validation
+- [x] Delete trade: confirmation dialog
+- [] Calendar view: view trades by date
 - [ ] Analytics charts: correct data display
-- [ ] Referral input: valid/invalid codes
-- [ ] Payment form (upgrade)
+- [x] Referral input: valid/invalid codes
+- [x] Payment form (upgrade)
 
 ### Pro User
 
-- [ ] All normal user tests
-- [ ] Access to pro-specific analytics & calendar
-- [ ] Upgrade flow: link from dashboard, form submission
-- [ ] Verify pro features unlocked after upgrade
+- [x] All normal user tests
+- [x] Access to pro-specific analytics & calendar
+- [x] Upgrade flow: link from dashboard, form submission
+- [x] Verify pro features unlocked after upgrade
 
 ### Affiliate / Influencer User
 
-- [ ] Affiliate dashboard: view generated codes
+- [x] Affiliate dashboard: view generated codes
 - [ ] Code generation: create new code, copy
 - [ ] Referral tracking: verify referral counts
 - [ ] Payout/process flow (if implemented) 
