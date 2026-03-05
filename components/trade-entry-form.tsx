@@ -89,8 +89,8 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: (data?: { isFirstTra
         try {
             const result = await addTrade(tradeData)
             if (!result.success) {
-                if (result.error === 'TRADE_LIMIT_REACHED') {
-                    setError('Trade limit reached! Free accounts are limited to 50 trades. Please upgrade to Pro for unlimited logging.')
+                if (result.code === 'TRIAL_EXPIRED' || result.error === 'TRIAL_EXPIRED') {
+                    setError('Your free trial has ended. Please upgrade to Premium to continue using TradeET.')
                 } else if (result.error) {
                     setError(result.error)
                 } else {

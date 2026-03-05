@@ -21,7 +21,7 @@ import { CopyButton } from '@/components/copy-button'
 
 export const metadata: Metadata = {
     title: "Affiliate Program — Earn Rewards Sharing TradeET",
-    description: "Join the TradeET affiliate program. Share your referral code and earn rewards when friends upgrade to Pro. Track your referrals and earnings.",
+    description: "Join the TradeET affiliate program. Share your referral code and earn rewards when friends upgrade to Premium. Track your referrals and earnings.",
     alternates: {
         canonical: "https://tradeet.app/affiliate",
     },
@@ -250,8 +250,8 @@ export default async function AffiliatePage() {
                                     number={2}
                                     title="They Upgrade"
                                     description={stats.isInfluencer
-                                        ? "When someone uses your code to upgrade to Pro, they get a 20% discount"
-                                        : "When someone uses your code to upgrade to Pro, you earn commission"}
+                                        ? "When someone uses your code to upgrade to Premium, they get a 20% discount"
+                                        : "When someone uses your code to upgrade to Premium, you earn commission"}
                                 />
                                 <StepCard
                                     number={3}

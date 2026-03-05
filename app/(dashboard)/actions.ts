@@ -57,23 +57,27 @@ export async function addTrade(data: unknown): Promise<Result<{ isFirstTrade: bo
         return { success: false, error: 'Not authenticated' }
     }
 
-    // Check free user trade limit (50 trades max)
+    // Fetch profile data so we can enforce trial expiration rules as well
     const { data: profile } = await supabase
         .from('profiles')
-        .select('role, first_trade_completed, first_win_completed')
+        .select('role, first_trade_completed, first_win_completed, trial_expires')
         .eq('id', userData.user.id)
         .single()
 
-    if (profile?.role === 'free') {
-        const { count } = await supabase
-            .from('trades')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', userData.user.id)
-
-        if ((count ?? 0) >= 50) {
-            return { success: false, error: 'TRADE_LIMIT_REACHED', code: 'TRADE_LIMIT_REACHED' }
+    // if the user is not pro/admin, verify that the 7‑day trial has not expired
+    if (profile && profile.role === 'free' && profile.trial_expires) {
+        const expires = new Date(profile.trial_expires).getTime()
+        const now = Date.now()
+        if (now > expires) {
+            return {
+                success: false,
+                error: 'Your free trial has ended. Please upgrade to Premium to continue logging trades.',
+                code: 'TRIAL_EXPIRED',
+            }
         }
     }
+
+    // previous 50-trade cap logic is no longer used; trial period limits access instead
 
     const profitUsd = validatedData.profit_usd ? parseFloat(validatedData.profit_usd) : 0
     const isFirstTrade = !profile?.first_trade_completed

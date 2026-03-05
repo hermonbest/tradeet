@@ -2,8 +2,8 @@ import type { Trade } from './types';
 
 export function calculateWinRate(trades: Trade[]) {
     if (!trades || trades.length === 0) return 0
-    const winningTrades = trades.filter((t) => t.profit_usd > 0).length
-    const losingTrades = trades.filter((t) => t.profit_usd < 0).length
+    const winningTrades = trades.filter((t) => (t.profit_usd || 0) > 0).length
+    const losingTrades = trades.filter((t) => (t.profit_usd || 0) < 0).length
     const totalDecisiveTrades = winningTrades + losingTrades
 
     if (totalDecisiveTrades === 0) return 0
@@ -17,8 +17,8 @@ export function calculateProfitFactor(trades: Trade[]) {
     let grossLoss = 0
 
     trades.forEach((t) => {
-        if (t.profit_usd > 0) grossProfit += t.profit_usd
-        if (t.profit_usd < 0) grossLoss += Math.abs(t.profit_usd)
+        if ((t.profit_usd || 0) > 0) grossProfit += (t.profit_usd || 0)
+        if ((t.profit_usd || 0) < 0) grossLoss += Math.abs(t.profit_usd || 0)
     })
 
     if (grossLoss === 0) return grossProfit > 0 ? Infinity : 0
@@ -28,8 +28,8 @@ export function calculateProfitFactor(trades: Trade[]) {
 export function calculateExpectancy(trades: Trade[]) {
     if (!trades || trades.length === 0) return 0
 
-    const winningTrades = trades.filter((t) => t.profit_usd > 0)
-    const losingTrades = trades.filter((t) => t.profit_usd < 0)
+    const winningTrades = trades.filter((t) => (t.profit_usd || 0) > 0)
+    const losingTrades = trades.filter((t) => (t.profit_usd || 0) < 0)
     const totalDecisiveTrades = winningTrades.length + losingTrades.length
 
     if (totalDecisiveTrades === 0) return 0
@@ -38,11 +38,11 @@ export function calculateExpectancy(trades: Trade[]) {
     const lossRate = losingTrades.length / totalDecisiveTrades
 
     const avgWin = winningTrades.length > 0
-        ? winningTrades.reduce((sum, t) => sum + t.profit_usd, 0) / winningTrades.length
+        ? winningTrades.reduce((sum, t) => sum + (t.profit_usd || 0), 0) / winningTrades.length
         : 0
 
     const avgLoss = losingTrades.length > 0
-        ? losingTrades.reduce((sum, t) => sum + Math.abs(t.profit_usd), 0) / losingTrades.length
+        ? losingTrades.reduce((sum, t) => sum + Math.abs(t.profit_usd || 0), 0) / losingTrades.length
         : 0
 
     return (winRate * avgWin) - (lossRate * avgLoss)
@@ -59,7 +59,7 @@ export function calculateDrawdown(trades: Trade[]) {
     let currentEquity = 0
 
     sortedTrades.forEach((t) => {
-        currentEquity += t.profit_usd
+        currentEquity += (t.profit_usd || 0)
         if (currentEquity > peak) {
             peak = currentEquity
         }
@@ -82,13 +82,13 @@ export function calculateNetPnL(trades: Trade[]) {
 export function calculateAverageWin(trades: Trade[]) {
     const winners = trades.filter((t) => (t.profit_usd || 0) > 0)
     if (winners.length === 0) return 0
-    return winners.reduce((sum, t) => sum + t.profit_usd, 0) / winners.length
+    return winners.reduce((sum, t) => sum + (t.profit_usd || 0), 0) / winners.length
 }
 
 export function calculateAverageLoss(trades: Trade[]) {
     const losers = trades.filter((t) => (t.profit_usd || 0) < 0)
     if (losers.length === 0) return 0
-    return losers.reduce((sum, t) => sum + t.profit_usd, 0) / losers.length
+    return losers.reduce((sum, t) => sum + Math.abs(t.profit_usd || 0), 0) / losers.length
 }
 
 export function calculatePerformanceScore(stats: {

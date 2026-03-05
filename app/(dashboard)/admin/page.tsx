@@ -47,8 +47,8 @@ export default async function AdminPage() {
         .order('created_at', { ascending: false })
 
     // Get affiliates with stats
-    const affiliatesData = await getAffiliatesAdmin()
-    const affiliates = ('affiliates' in affiliatesData && affiliatesData.affiliates) ? affiliatesData.affiliates : []
+    const affiliatesData = await getAffiliatesAdmin() as { success: true; affiliates: unknown[] } | { success: false; error: string }
+    const affiliates: Array<any> = affiliatesData.success ? (affiliatesData.affiliates || []) : []
 
     // Calculate commission stats
     const pendingCommissions = (commissions || []).filter(c => c.status === 'pending')

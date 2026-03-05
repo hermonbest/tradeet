@@ -96,8 +96,8 @@ const REGIONS = [
     { city: 'Mekele', count: '4+', emoji: '🏔' },
 ]
 
-const FREE_FEATURES = ['Up to 50 trades', 'Full dashboard & charts', 'Trade calendar', 'Psychology tags', 'ETB converter']
-const PRO_FEATURES = ['Everything in Free', 'Unlimited trade logging', 'Trader Performance Score', 'Screenshot upload', 'Priority support', 'All future features']
+const FREE_FEATURES = ['Unlimited access for 7 days', 'Full dashboard & charts', 'Trade calendar', 'Psychology tags', 'ETB converter']
+const PRO_FEATURES = ['Everything in Trial', 'Unlimited trade logging forever', 'Trader Performance Score', 'Screenshot upload', 'Priority support', 'All future features']
 
 const STATS = [
     { value: '50+', label: 'Traders Journaling' },
@@ -198,7 +198,7 @@ export default async function RootPage() {
 
                     <p className="text-xs text-muted-foreground mt-5">
                         No credit card required &middot; Free forever plan &middot;{' '}
-                        <span className="text-primary/80 font-medium">3,000 ETB lifetime Pro</span>
+                        <span className="text-primary/80 font-medium">3,000 ETB lifetime Premium</span>
                     </p>
                 </div>
 
@@ -410,9 +410,9 @@ export default async function RootPage() {
                         {/* Free */}
                         <div className="tradeet-card p-8 rounded-2xl space-y-6">
                             <div>
-                                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">Free</div>
+                                <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">7‑Day Trial</div>
                                 <div className="num text-4xl font-extrabold">$0</div>
-                                <div className="text-sm text-muted-foreground mt-1">Forever free, no card needed</div>
+                                <div className="text-sm text-muted-foreground mt-1">Full access for one week, then upgrade required</div>
                             </div>
                             <ul className="space-y-3">
                                 {FREE_FEATURES.map(f => (
@@ -426,11 +426,11 @@ export default async function RootPage() {
                                 href="/login"
                                 className="block text-center border border-border/60 hover:bg-muted/40 hover:border-border text-foreground font-semibold px-6 py-3 rounded-xl transition-all text-sm"
                             >
-                                Get Started Free
+                                Start 7‑Day Trial
                             </Link>
                         </div>
 
-                        {/* Pro */}
+                        {/* Premium */}
                         <div className="relative rounded-2xl overflow-hidden">
                             {/* Gradient border */}
                             <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/50 via-purple-600/25 to-cyan-500/10 p-[1.5px]">
@@ -447,7 +447,7 @@ export default async function RootPage() {
                             <div className="relative p-8 space-y-6">
                                 <div>
                                     <div className="flex items-center gap-2 mb-2">
-                                        <div className="text-xs uppercase tracking-widest text-primary font-semibold">Pro</div>
+                                        <div className="text-xs uppercase tracking-widest text-primary font-semibold">Premium</div>
                                         <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 rounded-full px-2 py-0.5 font-bold uppercase tracking-wide">Lifetime</span>
                                     </div>
                                     <div className="flex items-baseline gap-1.5">
@@ -505,13 +505,13 @@ export default async function RootPage() {
                         <span className="bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">knowing your numbers.</span>
                     </h2>
                     <p className="text-muted-foreground mb-8">
-                        Join free today. Upgrade when you&apos;re ready.
+                        Start your 7‑day trial today. After the trial ends, you must upgrade to Premium to continue using the app.
                     </p>
                     <Link
                         href="/login"
                         className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold px-10 py-4 rounded-2xl text-base hover:bg-primary/90 transition-all shadow-2xl shadow-primary/30 hover:-translate-y-0.5 hover:shadow-primary/40"
                     >
-                        Start for Free Now
+                        Start 7‑Day Trial
                         <ArrowRight className="w-5 h-5" />
                     </Link>
                 </div>
@@ -548,7 +548,7 @@ export default async function RootPage() {
                         
                         <h3 className="text-lg font-semibold text-foreground mt-6 mb-3">Get Started with Trade ET Today</h3>
                         <p>
-                            Start your journey to becoming a consistently profitable trader with Ethiopia's leading trading journal platform. Our free plan allows you to track up to 50 trades with full access to analytics and reporting. Upgrade to Pro for unlimited trades and advanced features. <strong>TradeET — Trade Smarter, Journal Better.</strong>
+                            Start your journey to becoming a consistently profitable trader with Ethiopia's leading trading journal platform. Enjoy a 7-day free trial with full access to analytics and reporting. After the trial ends, a premium upgrade is required to continue using the app. <strong>TradeET — Trade Smarter, Journal Better.</strong>
                         </p>
                     </article>
                 </div>

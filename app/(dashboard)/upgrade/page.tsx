@@ -17,13 +17,13 @@ export const metadata: Metadata = {
 };
 
 const FREE_FEATURES = [
-    { label: 'Up to 50 trades', available: true },
+    { label: 'Unlimited access for 7-day trial', available: true },
     { label: 'Net P&L Dashboard', available: true },
     { label: 'Win Rate & Charts', available: true },
     { label: 'Calendar View', available: true },
     { label: 'Exchange Rate Converter', available: true },
     { label: 'Trader Performance Score', available: false },
-    { label: 'Unlimited Trade Logging', available: false },
+    { label: 'Unlimited Trade Logging after trial', available: false },
     { label: 'Screenshot Upload', available: false },
 ]
 
@@ -141,7 +141,7 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
                         {/* Free */}
                         <div className="tradeet-card p-6 space-y-4">
                             <div>
-                                <h2 className="text-lg font-bold text-foreground">Free</h2>
+                                <h2 className="text-lg font-bold text-foreground">Trial (7 days)</h2>
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">Current Plan</p>
                             </div>
                             <ul className="space-y-3">

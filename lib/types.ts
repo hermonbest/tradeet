@@ -29,11 +29,18 @@ export interface Trade {
 export interface Profile {
   id: string;
   email: string | null;
+  // The user's current access level. We now treat every new account as a
+  // 7‑day free trial (role still stored as 'free' for backwards compatibility)
+  // and require a paid "pro" status once the trial expires. Admins keep the
+  // same elevated permission.
   role: 'free' | 'pro' | 'admin';
   exchange_rate: number;
   affiliate_code: string | null;
   is_influencer: boolean;
   referred_by_id: string | null;
+  // when the free trial expires (UTC timestamp). null means no expiration (e.g.
+  // legacy or admin account).
+  trial_expires: string | null;
   created_at: string;
   updated_at?: string;
 }

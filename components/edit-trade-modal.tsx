@@ -107,7 +107,7 @@ export function EditTradeModal({ trade, isOpen, onClose }: { trade: any; isOpen:
         try {
             const result = await updateTrade(trade.id, tradeData)
             if (!result.success) {
-                setError(result.message || 'Failed to update trade.')
+                setError(result.error || 'Failed to update trade.')
             } else {
                 form.reset()
                 onClose()

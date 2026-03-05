@@ -59,11 +59,11 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
         tip: 'Keep this updated for accurate ETB calculations'
     },
     {
-        title: 'Upgrade to Pro ⭐',
+        title: 'Upgrade to Premium ⭐',
         description: 'Unlock unlimited trades, performance score, screenshot uploads, and priority support. One-time payment of 3,000 ETB.',
         icon: '🚀',
         action: 'Visit the Upgrade page when you\'re ready',
-        tip: 'Free plan includes up to 50 trades - enough to get started!'
+        tip: 'You get a 7-day free trial with full access – make the most of it!'
     },
     {
         title: 'You\'re All Set! ✅',

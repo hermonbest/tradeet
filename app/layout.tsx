@@ -110,7 +110,7 @@ const jsonLd = {
     "@type": "Offer",
     price: "0",
     priceCurrency: "ETB",
-    description: "Free plan available with up to 50 trades",
+    description: "7-day free trial with full access; premium upgrade required afterwards",
   },
   aggregateRating: {
     "@type": "AggregateRating",
