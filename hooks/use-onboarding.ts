@@ -36,15 +36,18 @@ export function useOnboarding(serverState?: ServerOnboardingState) {
                 const skipped = localStorage.getItem('onboarding_skipped') === 'true'
                 const finished = localStorage.getItem('onboarding_finished') === 'true'
                 const completedSteps = localStorage.getItem('onboarding_completed_steps')
+
+                // Client-side completion takes precedence - don't show onboarding if user has completed or skipped it
+                const hasCompletedClientSide = skipped || finished
                 
-                // Server state takes precedence for new users
-                // If server says user hasn't completed onboarding, show it regardless of localStorage
-                const shouldShowBasedOnServer = serverState ? !serverState.isOnboardingCompleted : false
-                const shouldShowBasedOnClient = !skipped && !finished
-                
+                // Only show onboarding if:
+                // 1. User hasn't completed/skipped it on client side, AND
+                // 2. Server says it's not completed (for new users who haven't touched client side yet)
+                const shouldShowGuide = !hasCompletedClientSide && serverState ? !serverState.isOnboardingCompleted : false
+
                 setState(prev => ({
                     ...prev,
-                    shouldShowGuide: shouldShowBasedOnServer || shouldShowBasedOnClient,
+                    shouldShowGuide,
                     isOnboardingCompleted: serverState ? serverState.isOnboardingCompleted : finished,
                     isFirstTimeUser: serverState ? serverState.isFirstTimeUser : false,
                     hasCompletedFirstTrade: serverState ? serverState.hasCompletedFirstTrade : false,
