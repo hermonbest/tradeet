@@ -70,16 +70,23 @@ export default async function UpgradePage({ searchParams }: UpgradePageProps) {
 
     // Validate referral code if provided
     if (referralCode) {
-        const { data: affiliate } = await supabase
-            .from('profiles')
-            .select('is_influencer')
-            .eq('affiliate_code', referralCode.toUpperCase())
-            .single()
-
-        if (affiliate) {
-            isInfluencer = affiliate.is_influencer || false
+        // Special case for "SN" code
+        if (referralCode.toUpperCase().trim() === 'SN') {
+            isInfluencer = true
             finalPrice = calculatePrice(referralCode, isInfluencer)
             discountAmount = AFFILIATE_CONSTANTS.BASE_PRICE - finalPrice
+        } else {
+            const { data: affiliate } = await supabase
+                .from('profiles')
+                .select('is_influencer')
+                .eq('affiliate_code', referralCode.toUpperCase())
+                .single()
+
+            if (affiliate) {
+                isInfluencer = affiliate.is_influencer || false
+                finalPrice = calculatePrice(referralCode, isInfluencer)
+                discountAmount = AFFILIATE_CONSTANTS.BASE_PRICE - finalPrice
+            }
         }
     }
 

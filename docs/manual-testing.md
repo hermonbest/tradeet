@@ -53,12 +53,12 @@ This document outlines the manual testing procedures and checks for the TradeEt 
 
 ### Admin User
 
-- [ ] Admin login and dashboard access
-- [ ] View/manage users (normal/pro/affiliate/influencer)
-- [ ] Seed/demo user creation via tools (mjs scripts)
-- [ ] Ability to suspend/enable accounts
-- [ ] View analytics across platform
-- [ ] Access site-wide settings
+- [x] Admin login and dashboard access
+- [x] View/manage users (normal/pro/affiliate/influencer)
+- [x] Seed/demo user creation via tools (mjs scripts)
+- [x] Ability to suspend/enable accounts
+- [x] View analytics across platform
+- [x] Access site-wide settings
 
 ---
 
@@ -66,28 +66,28 @@ This document outlines the manual testing procedures and checks for the TradeEt 
 
 ### Payment Process (Upgrade)
 
-1. [ ] Navigate to upgrade page from dashboard
-2. [ ] Fill out payment form with valid/invalid details
-3. [ ] Handle success and failure responses
-4. [ ] Verify post-payment status change to Pro
+1. [x] Navigate to upgrade page from dashboard
+2. [x] Fill out payment form with valid/invalid details
+3. [x] Handle success and failure responses
+4. [x] Verify post-payment status change to Pro
 
 ### Onboarding Flow
 
-- [ ] First-time login prompts for tours or guides
-- [ ] Check onboarding wrapper/pop-ups
-- [ ] Skip/complete onboarding steps
+- [x] First-time login prompts for tours or guides
+- [x] Check onboarding wrapper/pop-ups
+- [x] Skip/complete onboarding steps
 
 ### Trade Entry & Analytics
 
-- [ ] Enter trade with various input combinations
-- [ ] Ensure calculation functions (ROI, P/L) display correctly
-- [ ] Validate charts update after new trade entry
+- [x] Enter trade with various input combinations
+- [x] Ensure calculation functions (ROI, P/L) display correctly
+- [ x] Validate charts update after new trade entry
 
 ### Calendar Interaction
 
-- [ ] Navigate months, select dates
-- [ ] Check trade details on date click
-- [ ] Add trade from calendar view (if available)
+- [x] Navigate months, select dates
+- [x] Check trade details on date click
+- [x] Add trade from calendar view (if available)
 
 ### Mobile Responsiveness
 

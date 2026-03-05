@@ -76,6 +76,20 @@ export async function validateReferralCode(code: string): Promise<ReferralValida
         };
     }
 
+    // Special case for "SN" code - treat as influencer
+    if (code.toUpperCase().trim() === 'SN') {
+        const discountAmount = AFFILIATE_CONSTANTS.BASE_PRICE * AFFILIATE_CONSTANTS.INFLUENCER_DISCOUNT;
+        const finalPrice = AFFILIATE_CONSTANTS.BASE_PRICE - discountAmount;
+        return {
+            valid: true,
+            affiliate: undefined, // No affiliate profile for special codes
+            isInfluencer: true,
+            discountAmount,
+            finalPrice,
+            message: `🎉 Special code! You get 20% off (${discountAmount} ETB discount)`
+        };
+    }
+
     // Use admin client to bypass RLS — profiles are only visible to their own owner by default
     const { createAdminClient } = await import('@/utils/supabase/admin');
     const adminClient = createAdminClient();

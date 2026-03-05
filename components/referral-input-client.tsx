@@ -19,12 +19,16 @@ export function ReferralInputWrapper({ initialCode, initialIsInfluencer }: Refer
         setIsInfluencer(influencer)
         // Update URL with referral code
         router.push(`/upgrade?ref=${validCode}`)
+        // Refresh to update server component data (price display)
+        router.refresh()
     }
 
     const handleClear = () => {
         setCode('')
         setIsInfluencer(false)
         router.push('/upgrade')
+        // Refresh to reset server component data (price back to original)
+        router.refresh()
     }
 
     return (

@@ -92,8 +92,8 @@ export function ReferralInput({ onValidCode, onClear }: ReferralInputProps) {
             {/* Result Message */}
             {result && (
                 <div className={`p-3 rounded-lg text-sm ${
-                    result.valid 
-                        ? 'bg-[#22c55e]/10 border border-[#22c55e]/30 text-[#22c55e]' 
+                    result.valid
+                        ? 'bg-[#22c55e]/10 border border-[#22c55e]/30 text-[#22c55e]'
                         : 'bg-red-500/10 border border-red-500/30 text-red-500'
                 }`}>
                     <div className="flex items-start gap-2">
@@ -102,7 +102,7 @@ export function ReferralInput({ onValidCode, onClear }: ReferralInputProps) {
                         ) : (
                             <X className="w-4 h-4 mt-0.5 shrink-0" />
                         )}
-                        <div className="space-y-1">
+                        <div className="space-y-1 w-full">
                             <p>{result.message}</p>
                             {result.valid && result.isInfluencer && (
                                 <div className="flex items-center gap-2 flex-wrap">
@@ -113,6 +113,18 @@ export function ReferralInput({ onValidCode, onClear }: ReferralInputProps) {
                                     <span className="text-xs">
                                         You save {formatPrice(result.discountAmount)}!
                                     </span>
+                                </div>
+                            )}
+                            {result.valid && (
+                                <div className="pt-2 mt-2 border-t border-[#22c55e]/20">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-muted-foreground">Original:</span>
+                                        <span className="line-through">{formatPrice(AFFILIATE_CONSTANTS.BASE_PRICE)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between font-semibold text-base mt-1">
+                                        <span>Now Pay:</span>
+                                        <span className="text-[#22c55e]">{formatPrice(result.finalPrice)} ETB</span>
+                                    </div>
                                 </div>
                             )}
                         </div>
