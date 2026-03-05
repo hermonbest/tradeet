@@ -356,7 +356,21 @@ export async function approvePayment(
             .single()
 
         if (affiliate) {
-            const commissionAmount = finalAmount * 0.10 // 10% commission
+            // Set referred_by_id on the user's profile if not already set
+            const { data: userProfile } = await supabase
+                .from('profiles')
+                .select('referred_by_id')
+                .eq('id', userId)
+                .single()
+
+            if (!userProfile?.referred_by_id) {
+                await supabase
+                    .from('profiles')
+                    .update({ referred_by_id: affiliate.id })
+                    .eq('id', userId)
+            }
+
+            const commissionAmount = finalAmount * 0.20 // 20% commission
 
             const { error: commissionError } = await supabase
                 .from('commissions')

@@ -47,9 +47,9 @@ This document outlines the manual testing procedures and checks for the TradeEt 
 ### Affiliate / Influencer User
 
 - [x] Affiliate dashboard: view generated codes
-- [ ] Code generation: create new code, copy
-- [ ] Referral tracking: verify referral counts
-- [ ] Payout/process flow (if implemented) 
+- [x] Code generation: create new code, copy
+- [x] Referral tracking: verify referral counts
+- [x] Payout/process flow (if implemented) 
 
 ### Admin User
 

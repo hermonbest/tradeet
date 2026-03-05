@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { completeOnboardingStep } from '@/app/(dashboard)/actions'
 import { createPortal } from 'react-dom'
 import { X, ChevronLeft, ChevronRight, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -110,11 +111,19 @@ export function OnboardingGuide({ onComplete, onSkip }: OnboardingGuideProps) {
         }
     }
 
-    const handleComplete = () => {
+    const handleComplete = async () => {
         const newCompleted = [...completedSteps, currentStep]
         setCompletedSteps(newCompleted)
         localStorage.setItem('onboarding_completed_steps', JSON.stringify(newCompleted))
         localStorage.setItem('onboarding_finished', 'true')
+        
+        // Update server-side database
+        try {
+            await completeOnboardingStep()
+        } catch (error) {
+            console.error('Failed to update onboarding status on server:', error)
+        }
+        
         onComplete()
     }
 

@@ -23,7 +23,7 @@ export function OnboardingWrapper({ children, serverOnboardingState }: Onboardin
         completeOnboarding,
         skipOnboarding,
         showGuide,
-    } = useOnboarding()
+    } = useOnboarding(serverOnboardingState)
     
     const [showHelpButton, setShowHelpButton] = useState(false)
 

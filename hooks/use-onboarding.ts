@@ -10,7 +10,14 @@ interface OnboardingState {
     isOnboardingCompleted: boolean
 }
 
-export function useOnboarding() {
+interface ServerOnboardingState {
+    isFirstTimeUser: boolean
+    hasCompletedFirstTrade: boolean
+    hasCompletedFirstWin: boolean
+    isOnboardingCompleted: boolean
+}
+
+export function useOnboarding(serverState?: ServerOnboardingState) {
     const [state, setState] = useState<OnboardingState>({
         shouldShowGuide: false,
         isFirstTimeUser: false,
@@ -30,12 +37,18 @@ export function useOnboarding() {
                 const finished = localStorage.getItem('onboarding_finished') === 'true'
                 const completedSteps = localStorage.getItem('onboarding_completed_steps')
                 
-                // For server-side data, we'll need to pass this from the component
-                // This hook primarily manages client-side state
+                // Server state takes precedence for new users
+                // If server says user hasn't completed onboarding, show it regardless of localStorage
+                const shouldShowBasedOnServer = serverState ? !serverState.isOnboardingCompleted : false
+                const shouldShowBasedOnClient = !skipped && !finished
+                
                 setState(prev => ({
                     ...prev,
-                    shouldShowGuide: !skipped && !finished,
-                    isOnboardingCompleted: finished,
+                    shouldShowGuide: shouldShowBasedOnServer || shouldShowBasedOnClient,
+                    isOnboardingCompleted: serverState ? serverState.isOnboardingCompleted : finished,
+                    isFirstTimeUser: serverState ? serverState.isFirstTimeUser : false,
+                    hasCompletedFirstTrade: serverState ? serverState.hasCompletedFirstTrade : false,
+                    hasCompletedFirstWin: serverState ? serverState.hasCompletedFirstWin : false,
                 }))
             } catch (error) {
                 console.error('Error loading onboarding state:', error)
@@ -45,7 +58,7 @@ export function useOnboarding() {
         }
 
         loadOnboardingState()
-    }, [])
+    }, [serverState])
 
     const completeOnboarding = useCallback(() => {
         localStorage.setItem('onboarding_finished', 'true')
