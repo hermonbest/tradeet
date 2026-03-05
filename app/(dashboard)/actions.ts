@@ -326,8 +326,7 @@ export async function approvePayment(
         .from('payments')
         .update({
             status: 'approved',
-            amount: finalAmount,
-            approved_at: new Date().toISOString()
+            amount: finalAmount
         })
         .eq('id', paymentId)
 
@@ -339,8 +338,7 @@ export async function approvePayment(
     const { error: updateProfileError } = await supabase
         .from('profiles')
         .update({
-            role: 'pro',
-            upgraded_at: new Date().toISOString()
+            role: 'pro'
         })
         .eq('id', userId)
 
