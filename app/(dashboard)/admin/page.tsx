@@ -9,6 +9,54 @@ import { format } from 'date-fns'
 import { formatPrice } from '@/lib/constants'
 import { getAffiliatesAdmin } from '@/app/(dashboard)/actions'
 
+async function approvePaymentAction(formData: FormData) {
+    'use server'
+
+    const paymentId = formData.get('paymentId') as string
+    const userId = formData.get('userId') as string
+    const actualAmount = parseFloat(formData.get('actualAmount') as string)
+
+    if (!paymentId || !userId) {
+        console.error('Missing payment or user ID in approvePaymentAction')
+        throw new Error('Missing payment or user ID')
+    }
+
+    console.log(`Approving payment ${paymentId} for user ${userId} with amount ${actualAmount}`)
+
+    const result = await approvePayment(paymentId, userId, actualAmount)
+
+    if (!result.success) {
+        console.error('Failed to approve payment:', result.error)
+        throw new Error(result.error || 'Failed to approve payment')
+    }
+
+    console.log('Payment approved successfully')
+    return result
+}
+
+async function rejectPaymentAction(formData: FormData) {
+    'use server'
+
+    const paymentId = formData.get('paymentId') as string
+
+    if (!paymentId) {
+        console.error('Missing payment ID in rejectPaymentAction')
+        throw new Error('Missing payment ID')
+    }
+
+    console.log(`Rejecting payment ${paymentId}`)
+
+    const result = await rejectPayment(paymentId)
+
+    if (!result.success) {
+        console.error('Failed to reject payment:', result.error)
+        throw new Error(result.error || 'Failed to reject payment')
+    }
+
+    console.log('Payment rejected successfully')
+    return result
+}
+
 export default async function AdminPage() {
     const supabase = await createClient()
     const { data: userData } = await supabase.auth.getUser()
@@ -159,11 +207,9 @@ export default async function AdminPage() {
                                     </div>
 
                                     <div className="flex gap-2 mt-auto">
-                                        <form action={async (formData: FormData) => {
-                                            'use server'
-                                            const actualAmount = parseFloat(formData.get('actualAmount') as string) || payment.amount || 3000
-                                            await approvePayment(payment.id, payment.user_id, actualAmount)
-                                        }} className="flex-1 space-y-2">
+                                        <form action={approvePaymentAction} className="flex-1 space-y-2">
+                                            <input type="hidden" name="paymentId" value={payment.id} />
+                                            <input type="hidden" name="userId" value={payment.user_id} />
                                             <Input
                                                 name="actualAmount"
                                                 type="number"
@@ -176,10 +222,8 @@ export default async function AdminPage() {
                                                 ✅ Approve
                                             </Button>
                                         </form>
-                                        <form action={async () => {
-                                            'use server'
-                                            await rejectPayment(payment.id)
-                                        }} className="flex-1 flex flex-col justify-end">
+                                        <form action={rejectPaymentAction} className="flex-1 flex flex-col justify-end">
+                                            <input type="hidden" name="paymentId" value={payment.id} />
                                             <Button type="submit" className="w-full" variant="destructive" size="sm">
                                                 ❌ Reject
                                             </Button>
