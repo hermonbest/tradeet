@@ -20,7 +20,8 @@ const TradeSchema = z.object({
     profit_usd: z.string().optional(),
     notes: z.string().optional(),
     trade_date: z.string().optional(),
-    screenshot_url: z.string().optional(),
+    // screenshot_url may be a string, undefined, or null
+    screenshot_url: z.string().nullable().optional(),
     tags: z.array(z.string()).optional(),
 })
 

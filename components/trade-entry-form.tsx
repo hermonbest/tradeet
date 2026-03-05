@@ -83,7 +83,8 @@ export function TradeEntryForm({ onSuccess }: { onSuccess?: (data?: { isFirstTra
         const tradeData = {
             ...values,
             pair: values.pair.trim().toUpperCase(),
-            screenshot_url: null,
+            // only include screenshot_url if the user entered something
+            ...(values.screenshot_url ? { screenshot_url: values.screenshot_url } : {}),
         }
 
         try {

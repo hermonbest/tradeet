@@ -455,7 +455,7 @@ export default async function RootPage() {
                                         <span className="text-xl text-muted-foreground font-medium">ETB</span>
                                     </div>
                                     <div className="flex items-center gap-2 mt-1.5">
-                                        <span className="num text-sm text-primary/80 font-semibold">≈ ~$22 USD</span>
+                                        <span className="num text-sm text-primary/80 font-semibold">≈ ~$16 USD</span>
                                         <span className="text-muted-foreground text-sm">· one-time</span>
                                     </div>
                                     <div className="text-sm text-muted-foreground mt-1">Pay once, own forever.</div>
