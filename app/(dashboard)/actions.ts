@@ -523,8 +523,7 @@ export async function getUserAffiliateStats(): Promise<Result<{
             *,
             referred_user:profiles!referred_user_id (
                 id,
-                email,
-                name
+                email
             )
         `)
         .eq('affiliate_id', userData.user.id)

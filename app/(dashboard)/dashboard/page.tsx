@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { unstable_cache } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { createAdminClient } from '@/utils/supabase/admin'
 import { TradeList } from '@/components/trade-list'
 import { AddTradeDialog } from '@/components/add-trade-dialog'
 import { ExchangeRateInput } from '@/components/exchange-rate-input'
@@ -26,47 +27,47 @@ import { WinRateDonut, EquityCurveChart, WinRateByDaysDonut, DailyPnLChart, Prog
 
 // Cached data fetching functions
 const getCachedTrades = unstable_cache(
-  async (userId: string) => {
-    const supabase = await createClient()
-    const { data: trades } = await supabase
-      .from('trades')
-      .select('*')
-      .eq('user_id', userId)
-      .order('trade_date', { ascending: false })
-      .order('created_at', { ascending: false })
-    return trades || []
-  },
-  ['trades'],
-  { revalidate: 60, tags: ['trades'] }
+    async (userId: string) => {
+        const supabase = createAdminClient()
+        const { data: trades } = await supabase
+            .from('trades')
+            .select('*')
+            .eq('user_id', userId)
+            .order('trade_date', { ascending: false })
+            .order('created_at', { ascending: false })
+        return trades || []
+    },
+    ['trades'],
+    { revalidate: 60, tags: ['trades'] }
 )
 
 const getCachedProfile = unstable_cache(
-  async (userId: string) => {
-    const supabase = await createClient()
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    return profile
-  },
-  ['profile'],
-  { revalidate: 300, tags: ['profile'] }
+    async (userId: string) => {
+        const supabase = createAdminClient()
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
+        return profile
+    },
+    ['profile'],
+    { revalidate: 300, tags: ['profile'] }
 )
 
 export const metadata: Metadata = {
-  title: "Dashboard — Your Trading Performance Analytics",
-  description: "View your trading performance metrics, equity curve, win rate analysis, and P&L tracking. Track your progress with ETB currency support on TradeET.",
-  alternates: {
-    canonical: "https://tradeet.app/dashboard",
-  },
+    title: "Dashboard — Your Trading Performance Analytics",
+    description: "View your trading performance metrics, equity curve, win rate analysis, and P&L tracking. Track your progress with ETB currency support on TradeET.",
+    alternates: {
+        canonical: "https://tradeet.app/dashboard",
+    },
 };
 
 export default async function DashboardPage() {
     const supabase = await createClient()
 
     const { data: userData } = await supabase.auth.getUser()
-    
+
     if (!userData?.user) {
         redirect('/login')
     }
