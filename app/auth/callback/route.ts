@@ -19,7 +19,7 @@ export async function GET(request: Request) {
                 // Your Profile & Trial Logic
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('id, trial_expires')
+                    .select('*')
                     .eq('id', user.id)
                     .single()
 
@@ -32,12 +32,22 @@ export async function GET(request: Request) {
                         role: 'free',
                         trial_expires: trialExpires,
                     })
-                } else if (!profile.trial_expires) {
-                    const trialExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-                    await supabase
-                        .from('profiles')
-                        .update({ trial_expires: trialExpires })
-                        .eq('id', user.id)
+                } else {
+                    // Profile exists - update trial_expires if missing
+                    if (!profile.trial_expires) {
+                        const trialExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                        await supabase
+                            .from('profiles')
+                            .update({ trial_expires: trialExpires })
+                            .eq('id', user.id)
+                    }
+                    // Also update email if it's missing in the profile
+                    if (!profile.email && user.email) {
+                        await supabase
+                            .from('profiles')
+                            .update({ email: user.email })
+                            .eq('id', user.id)
+                    }
                 }
                 
                 return NextResponse.redirect(`${origin}${next}`)
