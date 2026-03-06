@@ -28,8 +28,10 @@ export async function googleLogin() {
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            // Ensure this environment variable is set in Vercel settings!
-            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+            // Hardcoded production URL for Vercel deployment
+            // Make sure to add https://tradeet.vercel.app/auth/callback in Supabase Dashboard
+            // Authentication > URL Configuration > Additional Redirect URLs
+            redirectTo: `https://tradeet.vercel.app/auth/callback`,
         },
     })
 
