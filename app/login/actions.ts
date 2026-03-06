@@ -21,19 +21,26 @@ export async function login(formData: FormData) {
     revalidatePath('/', 'layout')
     redirect('/')
 }
-
 export async function googleLogin() {
     const supabase = await createClient()
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    // 1. Get the authorization URL from Supabase
+    const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
+            // Ensure this environment variable is set in Vercel settings!
             redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
         },
     })
 
     if (error) {
-        redirect(`/login?message=${encodeURIComponent(error.message)}`)
+        console.error('OAuth Error:', error)
+        return redirect('/login?message=Could not authenticate')
+    }
+
+    // 2. TRIGGER THE REDIRECT: This sends the user to Google
+    if (data.url) {
+        return redirect(data.url)
     }
 }
 
