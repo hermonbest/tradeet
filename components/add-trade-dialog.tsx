@@ -28,22 +28,24 @@ export function AddTradeDialog() {
 
     const handleSuccess = (data?: { isFirstTrade?: boolean; isFirstWin?: boolean; isComebackWin?: boolean }) => {
         setOpen(false)
-        
+
+        // Double-check with localStorage to prevent showing first_trade celebration repeatedly
+        const hasShownFirstTradeCelebration = localStorage.getItem('has_shown_first_trade_celebration') === 'true'
+        const hasShownFirstWinCelebration = localStorage.getItem('has_shown_first_win_celebration') === 'true'
+
         // Handle different celebration scenarios
         if (data?.isComebackWin) {
             // Comeback win takes priority - it's more meaningful
             setCelebrationType('comeback_win')
             setShowCelebration(true)
-        } else if (data?.isFirstTrade && data?.isFirstWin) {
+        } else if (data?.isFirstTrade && !hasShownFirstTradeCelebration) {
             // First trade AND it's a winner - show first trade celebration (more fundamental)
+            localStorage.setItem('has_shown_first_trade_celebration', 'true')
             setCelebrationType('first_trade')
             setShowCelebration(true)
-        } else if (data?.isFirstTrade) {
-            // First trade but not a win (loss or breakeven)
-            setCelebrationType('first_trade')
-            setShowCelebration(true)
-        } else if (data?.isFirstWin) {
+        } else if (data?.isFirstWin && !hasShownFirstWinCelebration) {
             // Not first trade, but first win (user had losses before)
+            localStorage.setItem('has_shown_first_win_celebration', 'true')
             setCelebrationType('first_win')
             setShowCelebration(true)
         }

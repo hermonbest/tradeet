@@ -78,6 +78,31 @@ export function Celebration({ type, message, onClose }: CelebrationProps) {
 
     const config = getConfig()
 
+    // Inject confetti styles on client side only
+    useEffect(() => {
+        if (typeof document !== 'undefined' && !document.getElementById('confetti-style')) {
+            const style = document.createElement('style')
+            style.id = 'confetti-style'
+            style.textContent = `
+                @keyframes confetti {
+                    0% {
+                        transform: translateY(0) rotate(0deg);
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: translateY(100vh) rotate(720deg);
+                        opacity: 0;
+                    }
+                }
+
+                .animate-confetti {
+                    animation: confetti linear forwards;
+                }
+            `
+            document.head.appendChild(style)
+        }
+    }, [])
+
     if (!isMounted) return null
 
     return createPortal(
@@ -136,27 +161,4 @@ export function Celebration({ type, message, onClose }: CelebrationProps) {
         </div>,
         document.body
     )
-}
-
-// Confetti animation keyframes
-const style = document.createElement('style')
-style.textContent = `
-    @keyframes confetti {
-        0% {
-            transform: translateY(0) rotate(0deg);
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(100vh) rotate(720deg);
-            opacity: 0;
-        }
-    }
-    
-    .animate-confetti {
-        animation: confetti linear forwards;
-    }
-`
-if (typeof document !== 'undefined' && !document.getElementById('confetti-style')) {
-    style.id = 'confetti-style'
-    document.head.appendChild(style)
 }
